@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
-import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, LogOut, Plane, Languages, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, LogOut, Languages, Moon, Sun } from 'lucide-react';
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
