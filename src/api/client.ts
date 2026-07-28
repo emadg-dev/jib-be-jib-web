@@ -6,6 +6,13 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' }
 });
 
+apiClient.interceptors.request.use((config) => {
+  console.log("REQUEST");
+  console.log(config.url);
+  console.log(config.withCredentials);
+  return config;
+});
+
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {

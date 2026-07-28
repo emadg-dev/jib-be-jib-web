@@ -4,12 +4,28 @@ import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { ArrowRight, Wallet, TrendingUp, TrendingDown, Users, DollarSign } from 'lucide-react';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { useEffect } from 'react';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
 
 export default function Dashboard() {
   const { language } = usePreferences();
   const fa = language === 'fa';
+
+  useEffect(() => {
+    fetch(
+      `${import.meta.env.VITE_API_URL}/dashboard`,
+      {
+        credentials: "include",
+      }
+    )
+      .then(async (r) => {
+        console.log("fetch status", r.status);
+        console.log(await r.text());
+      })
+      .catch(console.error);
+  }, []);
 
   const { data: res, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
