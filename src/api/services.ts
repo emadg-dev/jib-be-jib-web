@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 
+
 export interface User { 
   id: string; 
   name: string; 
@@ -69,29 +70,29 @@ export interface DashboardData {
 }
 
 export const authApi = {
-  login: (data: any) => apiClient.post<{data: User}>('/auth/login', data),
+  login: (data: any) => apiClient.post<User>('/auth/login', data),
   logout: () => apiClient.post('/auth/logout'),
-  me: () => apiClient.get<{data: User}>('/auth/me'),
+  me: () => apiClient.get<User>('/auth/me'),
 };
 
 export const dashboardApi = {
-  get: () => apiClient.get<{data: DashboardData}>('/dashboard'),
+  get: () => apiClient.get<DashboardData>('/dashboard'),
 };
 
 export const membersApi = {
-  getAll: () => apiClient.get<{data: Member[]}>('/members'),
+  getAll: () => apiClient.get<Member[]>('/members'),
   create: (data: any) => apiClient.post('/members', data),
   delete: (id: string) => apiClient.delete(`/members/${id}`),
 };
 
 export const depositsApi = {
-  getAll: () => apiClient.get<{data: Deposit[]}>('/deposits'),
+  getAll: () => apiClient.get<Deposit[]>('/deposits'),
   create: (data: any) => apiClient.post('/deposits', data),
   delete: (id: string) => apiClient.delete(`/deposits/${id}`),
 };
 
 export const withdrawalsApi = {
-  getAll: () => apiClient.get<{data: Withdrawal[]}>('/withdrawals'),
+  getAll: () => apiClient.get<Withdrawal[]>('/withdrawals'),
   create: (data: any) => apiClient.post('/withdrawals', data),
   delete: (id: string) => apiClient.delete(`/withdrawals/${id}`),
 };
