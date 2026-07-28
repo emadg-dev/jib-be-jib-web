@@ -32,7 +32,7 @@ export default function Login() {
   
       login(res.data.user);
       console.log("login okay")
-      navigate('/deposits');
+      navigate('/dashboard');
   
     } catch(e:any){
       alert(e.message || 'Login failed');
