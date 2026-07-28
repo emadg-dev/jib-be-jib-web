@@ -9,10 +9,10 @@ export default function AppLayout() {
   const location = useLocation();
   const fa = language === 'fa';
   const nav = [
-    { name: fa ? 'داشبورد' : 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: fa ? 'اعضا' : 'Members', path: '/members', icon: Users },
-    { name: fa ? 'واریزها' : 'Deposits', path: '/deposits', icon: ArrowDownToLine },
-    { name: fa ? 'هزینه‌ها' : 'Expenses', path: '/withdrawals', icon: ArrowUpFromLine },
+    { name: fa ? 'داشبورد' : 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['owner', 'member'] },
+    { name: fa ? 'اعضا' : 'Members', path: '/members', icon: Users, roles: ['owner'] },
+    { name: fa ? 'واریزها' : 'Deposits', path: '/deposits', icon: ArrowDownToLine, roles: ['owner', 'member'] },
+    { name: fa ? 'هزینه‌ها' : 'Expenses', path: '/withdrawals', icon: ArrowUpFromLine, roles: ['owner', 'member'] },
   ];
   const controls = { language, theme, toggleLanguage, toggleTheme, logout, fa };
 
@@ -20,13 +20,20 @@ export default function AppLayout() {
     <div className="min-h-screen lg:flex">
       <aside className="glass-panel hidden w-72 flex-col border-y-0 border-l-0 rounded-none lg:fixed lg:inset-y-0 lg:flex">
         <Brand fa={fa} />
-        <Navigation nav={nav} pathname={location.pathname} />
+        <Navigation
+          nav={nav.filter(x => x.roles.includes(String(user?.role)))}
+          pathname={location.pathname}
+        />
         <UserMenu name={user?.name} {...controls} />
       </aside>
       <div className="min-w-0 flex-1 lg:ml-72 rtl:lg:mr-72 rtl:lg:ml-0">
         <header className="glass-panel sticky top-0 z-20 border-x-0 border-t-0 rounded-none px-4 py-3 sm:px-6 lg:hidden">
           <div className="flex items-center justify-between gap-3"><Brand fa={fa} compact /><HeaderControls {...controls} /></div>
-          <Navigation nav={nav} pathname={location.pathname} mobile />
+          <Navigation
+            nav={nav.filter(x => x.roles.includes(String(user?.role)))}
+            pathname={location.pathname}
+            mobile
+          />
         </header>
         <main className="mx-auto w-full max-w-7xl p-4 pb-10 sm:p-6 lg:p-8"><Outlet /></main>
       </div>
@@ -35,19 +42,19 @@ export default function AppLayout() {
 }
 
 function Brand({ compact = false, fa }: { compact?: boolean; fa: boolean }) {
-  const {theme,} = usePreferences();
+  const { theme, } = usePreferences();
   return <div className={compact ? 'flex items-center gap-2 text-lg font-bold text-slate-900' : 'flex items-center gap-3 px-7 py-8 text-xl font-bold text-slate-900'}>
     {/* <span className="grid h-10 w-10 place-items-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200"><Plane size={20} /></span> */}
     <span className="grid pt-1 place-items-center
     ">
-    <img
-      // place-items-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200
-     
-      src= {theme === 'light' ? "/jbj_icon.png" : "/jbj_icon_dark.png"}
-      alt="Jib-be-Jib logo"
-      className="object-contain h-10"
-    />
-      </span>
+      <img
+        // place-items-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200
+
+        src={theme === 'light' ? "/jbj_icon.png" : "/jbj_icon_dark.png"}
+        alt="Jib-be-Jib logo"
+        className="object-contain h-10"
+      />
+    </span>
     <span>{fa ? 'جیب‌به‌جیب' : 'Jib-be-Jib'}</span></div>;
 }
 

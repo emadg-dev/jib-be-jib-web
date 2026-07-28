@@ -17,18 +17,39 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   return user ? children : <Navigate to="/login" replace />;
 };
 
+
+const RoleRoute = ({
+  children,
+  roles
+}: {
+  children: JSX.Element;
+  roles: string[];
+}) => {
+
+  const { user } = useAuth();
+
+  if (!user || !roles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/login" element={<Login />} />
     <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
       <Route index element={<Navigate to="/dashboard" replace />} />
       <Route path="dashboard" element={<Dashboard />} />
-      <Route path="members" element={<Members />} />
+      <Route path="members"element={<RoleRoute roles={['owner']}><Members /></RoleRoute>}/>
       <Route path="deposits" element={<Deposits />} />
       <Route path="withdrawals" element={<Withdrawals />} />
     </Route>
   </Routes>
 );
+
+
 
 export default function App() {
   return (
