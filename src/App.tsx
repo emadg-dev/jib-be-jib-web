@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { PreferencesProvider } from './contexts/PreferencesContext';
 import AppLayout from './layouts/AppLayout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -32,11 +33,13 @@ const AppRoutes = () => (
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
+      <PreferencesProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </PreferencesProvider>
     </QueryClientProvider>
   );
 }
