@@ -25,13 +25,13 @@ apiClient.interceptors.response.use(
     // if (error.response?.status === 401) {
     //   window.dispatchEvent(new Event('auth-error'));
     // }
-
-    if (
-      error.response?.status === 401 &&
-      error.config?.url?.includes('/auth/me')
-  ) {
-      window.dispatchEvent(new Event('auth-error'));
-  }
+    console.log(error.config);
+  //   if (
+  //     error.response?.status === 401 &&
+  //     error.config?.url?.includes('/auth/me')
+  // ) {
+  //     window.dispatchEvent(new Event('auth-error'));
+  // }
 
     return Promise.reject(error.response?.data || error.message);
   }
