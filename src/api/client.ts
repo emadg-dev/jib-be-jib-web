@@ -9,9 +9,21 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    console.log('========== API ERROR ==========');
+    console.log('URL:', error.config?.url);
+    console.log('Status:', error.response?.status);
+    console.log('Headers:', error.response?.headers);
+    console.log('Error:', error);
+
+    // if (error.response?.status === 401) {
+    //   window.dispatchEvent(new Event('auth-error'));
+    // }
+
     if (error.response?.status === 401) {
-      window.dispatchEvent(new Event('auth-error'));
+      alert(`401 on ${error.config?.url}`);
+      window.dispatchEvent(new Event("auth-error"));
     }
+
     return Promise.reject(error.response?.data || error.message);
   }
 );
