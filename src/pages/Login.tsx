@@ -23,6 +23,7 @@ export default function Login() {
     try {
       const res = await authApi.login(data);
       login(res.data);
+      await authApi.me();
       navigate('/dashboard');
     } catch (e: any) {
       alert(e.message || 'Login failed');

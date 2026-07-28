@@ -19,10 +19,12 @@ apiClient.interceptors.response.use(
     //   window.dispatchEvent(new Event('auth-error'));
     // }
 
-    if (error.response?.status === 401) {
-      alert(`401 on ${error.config?.url}`);
-      window.dispatchEvent(new Event("auth-error"));
-    }
+    if (
+      error.response?.status === 401 &&
+      error.config?.url?.includes('/auth/me')
+  ) {
+      window.dispatchEvent(new Event('auth-error'));
+  }
 
     return Promise.reject(error.response?.data || error.message);
   }
