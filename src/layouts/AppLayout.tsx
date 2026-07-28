@@ -35,7 +35,20 @@ export default function AppLayout() {
 }
 
 function Brand({ compact = false, fa }: { compact?: boolean; fa: boolean }) {
-  return <div className={compact ? 'flex items-center gap-2 text-lg font-bold text-slate-900' : 'flex items-center gap-3 px-7 py-8 text-xl font-bold text-slate-900'}><span className="grid h-10 w-10 place-items-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200"><Plane size={20} /></span><span>{fa ? 'جیب‌به‌جیب' : 'Jib-be-Jib'}</span></div>;
+  const {theme,} = usePreferences();
+  return <div className={compact ? 'flex items-center gap-2 text-lg font-bold text-slate-900' : 'flex items-center gap-3 px-7 py-8 text-xl font-bold text-slate-900'}>
+    {/* <span className="grid h-10 w-10 place-items-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200"><Plane size={20} /></span> */}
+    <span className="grid pt-1 place-items-center
+    ">
+    <img
+      // place-items-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200
+     
+      src= {theme === 'light' ? "/jbj_icon.png" : "/jbj_icon_dark.png"}
+      alt="Jib-be-Jib logo"
+      className="object-contain h-10"
+    />
+      </span>
+    <span>{fa ? 'جیب‌به‌جیب' : 'Jib-be-Jib'}</span></div>;
 }
 
 function Navigation({ nav, pathname, mobile = false }: any) {
