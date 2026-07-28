@@ -29,20 +29,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-
-    alert("Calling /auth/me");
+    const timer = setTimeout(() => {
+      authApi.me()
+        .then((res) => {
+          setUser(res.data);
+        })
+        .catch(() => {
+          setUser(null);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }, 500);
   
-    authApi.me()
-      .then((res) => {
-        alert("me success");
-        setUser(res.data);
-      })
-      .catch(() => {
-        alert("me failed");
-        setUser(null);
-      })
-      .finally(() => setLoading(false));
-  
+    return () => clearTimeout(timer);
   }, []);
   const handleAuthError = () => {
     console.log("AUTH ERROR EVENT");

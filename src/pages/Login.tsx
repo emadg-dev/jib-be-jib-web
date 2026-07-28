@@ -19,16 +19,25 @@ export default function Login() {
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data:any)=>{
     try {
       const res = await authApi.login(data);
-      login(res.data);
-      await authApi.me();
-      navigate('/dashboard');
-    } catch (e: any) {
+  
+      // const me = await authApi.me();
+
+      localStorage.setItem(
+        'token',
+        res.data.token
+      );
+  
+      login(res.data.user);
+      console.log("login okay")
+      navigate('/deposits');
+  
+    } catch(e:any){
       alert(e.message || 'Login failed');
     }
-  };
+  }
 
   return (
     <div className="relative flex min-h-screen items-center justify-center p-4 sm:p-6">

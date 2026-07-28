@@ -1,11 +1,16 @@
 import { apiClient } from './client';
 
 
-export interface User { 
+export interface User {
   id: string; 
   name: string; 
   role: 'owner' | 'member'; 
   trip_id?: string;
+}
+
+export interface LoginResponse {
+  user: User;
+  token: string;
 }
 
 export interface Member { 
@@ -69,8 +74,15 @@ export interface DashboardData {
   settlements: Settlement[];
 }
 
+// export const authApi = {
+//   login: (data: (any)) => apiClient.post<User>('/auth/login', data),
+//   logout: () => apiClient.post('/auth/logout'),
+//   me: () => apiClient.get<User>('/auth/me'),
+// };
+
+
 export const authApi = {
-  login: (data: any) => apiClient.post<User>('/auth/login', data),
+  login: (data: any) => apiClient.post<LoginResponse>('/auth/login', data),
   logout: () => apiClient.post('/auth/logout'),
   me: () => apiClient.get<User>('/auth/me'),
 };
