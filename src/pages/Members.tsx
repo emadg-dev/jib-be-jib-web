@@ -3,12 +3,14 @@ import { membersApi } from '../api/services';
 import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td, Button, Input } from '../components/ui/core';
 import { useForm } from 'react-hook-form';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
 import { Eye, EyeOff, Pencil } from 'lucide-react';
 
 export default function Members() {
   const { language } = usePreferences();
   const fa = language === 'fa';
+  const { isOwner } = useAuth();
 
   const queryClient = useQueryClient();
 
@@ -25,7 +27,7 @@ export default function Members() {
     handleSubmit,
     reset,
     setValue
-  } = useForm();
+  } = useForm<any>({ defaultValues: { role: 'member', active: true } });
 
 
   const createMutation = useMutation({
@@ -38,13 +40,9 @@ export default function Members() {
 
 
   const updateMutation = useMutation({
-    mutationFn: async (data: any) => {
-      // بعداً:
-      // return membersApi.update(data.id, data);
-
-      console.log('update member', data);
-
-      return Promise.resolve();
+    mutationFn: (data: any) => {
+      const { id, password, ...member } = data;
+      return membersApi.update(id, { ...member, ...(password ? { password } : {}) });
     },
 
     onSuccess: () => {
@@ -72,7 +70,7 @@ export default function Members() {
       });
     }
     else {
-      createMutation.mutate(data);
+      createMutation.mutate({ ...data, active: Boolean(data.active) });
     }
 
   };
@@ -83,7 +81,9 @@ export default function Members() {
     setEditingMember(member);
 
     setValue('name', member.name);
+    setValue('display_name', member.display_name || member.name);
     setValue('role', member.role);
+    setValue('active', member.active !== false);
     setValue('password', '');
 
   };
@@ -113,7 +113,7 @@ export default function Members() {
       </div>
 
 
-      <Card>
+      {isOwner && <Card>
 
         <CardHeader>
           <CardTitle>
@@ -139,13 +139,12 @@ export default function Members() {
                 {fa ? 'نام' : 'Name'}
               </label>
 
-              <Input
-                {...register('name', { required: true })}
-                className="mt-1"
-              />
+              <Input {...register('name', { required: true })} className="mt-1" placeholder={fa ? 'نام کاربری یکتا' : 'Unique login username'} />
 
             </div>
 
+
+            <div className="flex-1"><label className="text-sm font-medium">{fa ? 'نام نمایشی' : 'Display name'}</label><Input {...register('display_name', { required: true })} className="mt-1" /></div>
 
             <div className="flex-1">
   <label className="text-sm font-medium">
@@ -198,6 +197,7 @@ export default function Members() {
 
             </div>
 
+            <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" {...register('active')} />{fa ? 'عضو فعال' : 'Active member'}</label>
 
             <div className="flex gap-2">
 
@@ -230,7 +230,7 @@ export default function Members() {
 
         </CardContent>
 
-      </Card>
+      </Card>}
 
 
 
@@ -244,10 +244,11 @@ export default function Members() {
 
               <Tr>
 
-                <Th>{fa ? 'نام' : 'Name'}</Th>
+                <Th>{fa ? 'نام نمایشی' : 'Display name'}</Th>
+                <Th>{fa ? 'نام کاربری' : 'Username'}</Th>
                 <Th>{fa ? 'نقش' : 'Role'}</Th>
                 <Th>{fa ? 'تاریخ عضویت' : 'Joined'}</Th>
-                <Th>{fa ? 'عملیات' : 'Action'}</Th>
+                {isOwner && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
 
               </Tr>
 
@@ -262,12 +263,16 @@ export default function Members() {
                   <Tr key={m.id}>
 
                     <Td className="font-medium">
-                      {m.name}
+                      {m.display_name || m.name}
                     </Td>
 
 
+                    <Td className="text-slate-500">
+                      {m.name}
+                    </Td>
+
                     <Td className="capitalize">
-                      {m.role}
+                      {m.role}{m.active === false && <span className="ms-2 text-xs text-amber-600">{fa ? 'غیرفعال' : 'Inactive'}</span>}
                     </Td>
 
 
@@ -276,7 +281,7 @@ export default function Members() {
                     </Td>
 
 
-                    <Td>
+                    {isOwner && <Td>
 
                       <div className="flex gap-2">
 
@@ -301,7 +306,8 @@ export default function Members() {
 
                       </div>
 
-                    </Td>
+                    </Td>}
+
 
 
                   </Tr>

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { PreferencesProvider } from './contexts/PreferencesContext';
 import AppLayout from './layouts/AppLayout';
@@ -8,13 +9,25 @@ import Login from './pages/Login';
 import Members from './pages/Members';
 import Deposits from './pages/Deposits';
 import Withdrawals from './pages/Withdrawals';
+import TripPicker from './pages/TripPicker';
 
 const queryClient = new QueryClient();
 
+function TripDataReset() {
+  const client = useQueryClient();
+  useEffect(() => {
+    const reset = () => client.clear();
+    window.addEventListener('trip-changed', reset);
+    return () => window.removeEventListener('trip-changed', reset);
+  }, [client]);
+  return null;
+}
+
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div>Loading...</div>;
-  return user ? children : <Navigate to="/login" replace />;
+  if (loading) return <div className="grid min-h-screen place-items-center text-slate-500">Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
 };
 
 
@@ -36,10 +49,14 @@ const RoleRoute = ({
 };
 
 
-const AppRoutes = () => (
+const AppRoutes = () => {
+  const { user, loading, selectedTrip, requiresTripSelection } = useAuth();
+  const needsTrip = user && !loading && (requiresTripSelection || !selectedTrip);
+  return (
   <Routes>
-    <Route path="/login" element={<Login />} />
-    <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+    <Route path="/login" element={user ? <Navigate to={needsTrip ? '/trips' : '/dashboard'} replace /> : <Login />} />
+    <Route path="/trips" element={<ProtectedRoute><TripPicker /></ProtectedRoute>} />
+    <Route path="/" element={<ProtectedRoute>{needsTrip ? <Navigate to="/trips" replace /> : <AppLayout />}</ProtectedRoute>}>
       <Route index element={<Navigate to="/dashboard" replace />} />
       <Route path="dashboard" element={<Dashboard />} />
       <Route path="members"element={<RoleRoute roles={['owner']}><Members /></RoleRoute>}/>
@@ -47,13 +64,15 @@ const AppRoutes = () => (
       <Route path="withdrawals" element={<Withdrawals />} />
     </Route>
   </Routes>
-);
+  );
+};
 
 
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <TripDataReset />
       <PreferencesProvider>
         <AuthProvider>
           <BrowserRouter>

@@ -1,66 +1,75 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { User } from '../api/services';
-import { authApi } from '../api/services';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import type { SessionResponse, Trip, User } from '../api/services';
+import { authApi, tripsApi } from '../api/services';
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (u: User) => void;
-  logout: () => void;
-  isOwner: boolean;
-  isMember: boolean;
-}
-
+type AuthContextType = {
+  user: User | null; trips: Trip[]; selectedTrip: Trip | null; requiresTripSelection: boolean; loading: boolean;
+  login: (session: SessionResponse) => void; selectTrip: (id: string) => Promise<void>; createTrip: (data: { name: string; currency: string }) => Promise<void>; updateTrip: (data: { name: string; currency: string }) => Promise<void>; logout: () => Promise<void>;
+  isOwner: boolean; isMember: boolean;
+};
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+const payload = <T,>(response: any): T => response?.data ?? response;
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [requiresTripSelection, setRequiresTripSelection] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const isOwner = user?.role === 'owner';
-  const isMember = user?.role === 'member';
-
-  useEffect(() => {
-    authApi.me().then((res) => setUser(res.data)).catch(() => setUser(null)).finally(() => setLoading(false));
-    
-    const handleAuthError = () => setUser(null);
-    window.addEventListener('auth-error', handleAuthError);
-    return () => window.removeEventListener('auth-error', handleAuthError);
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      authApi.me()
-        .then((res) => {
-          setUser(res.data);
-        })
-        .catch(() => {
-          setUser(null);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }, 500);
-  
-    return () => clearTimeout(timer);
-  }, []);
-  const handleAuthError = () => {
-    console.log("AUTH ERROR EVENT");
-    setUser(null);
+  const applySession = (session: SessionResponse) => {
+    setUser(session.user); const available = session.trips || []; setTrips(available);
+    const activeTrips = available.filter(trip => trip.active !== false);
+    const explicitlySelected = session.selected_trip || activeTrips.find(item => item.id === session.user?.trip_id);
+    const trip = explicitlySelected || activeTrips.at(-1) || null;
+    setSelectedTrip(trip); setRequiresTripSelection(false);
   };
-  console.log(handleAuthError.toString())
-  const login = (u: User) => setUser(u);
-  const logout = async () => { await authApi.logout(); setUser(null); };
-
-  return <AuthContext.Provider value={
-    { user, 
-      loading, 
-      login, 
-      logout, 
-      isOwner,
-    isMember 
-  }
-  }>{children}</AuthContext.Provider>;
+  useEffect(() => {
+    authApi.me().then(async response => {
+      const session = payload<SessionResponse>(response);
+      applySession(session);
+      try {
+        const available = payload<Trip[]>(await tripsApi.available());
+        setTrips(available);
+        const hasSelectedTrip = session.selected_trip || session.user?.trip_id;
+        const latest = available.filter(trip => trip.active !== false).at(-1);
+        if (!hasSelectedTrip && latest) {
+          const result = payload<{ token: string; trip?: Trip }>(await tripsApi.select(latest.id));
+          if (result.token) localStorage.setItem('token', result.token);
+          setSelectedTrip(result.trip || latest);
+          window.dispatchEvent(new Event('trip-changed'));
+        }
+      } catch { /* session trips remain available */ }
+    }).catch(() => setUser(null)).finally(() => setLoading(false));
+    const requireSelection = () => { setSelectedTrip(null); setRequiresTripSelection(true); };
+    const refreshMembership = () => { authApi.me().then(response => applySession(payload<SessionResponse>(response))).catch(() => undefined); };
+    window.addEventListener('trip-selection-required', requireSelection);
+    window.addEventListener('owner-permission-required', refreshMembership);
+    return () => { window.removeEventListener('trip-selection-required', requireSelection); window.removeEventListener('owner-permission-required', refreshMembership); }; 
+  }, []);
+  const activateLatestTrip = async (available: Trip[], session: SessionResponse) => {
+    const hasSelectedTrip = session.selected_trip || session.user?.trip_id;
+    const latest = available.filter(trip => trip.active !== false).at(-1);
+    if (!hasSelectedTrip && latest) await selectTrip(latest.id);
+  };
+  const login = (session: SessionResponse) => {
+    applySession(session);
+    tripsApi.available().then(async response => { const available = payload<Trip[]>(response); setTrips(available); await activateLatestTrip(available, session); }).catch(() => undefined);
+  };
+  const selectTrip = async (id: string) => {
+    const result = payload<{ token: string; trip?: Trip }>(await tripsApi.select(id));
+    if (result.token) localStorage.setItem('token', result.token);
+    setSelectedTrip(result.trip || trips.find(trip => trip.id === id) || null); setRequiresTripSelection(false);
+    window.dispatchEvent(new Event('trip-changed'));
+  };
+  const createTrip = async (data: { name: string; currency: string }) => {
+    const trip = payload<Trip>(await tripsApi.create(data));
+    setTrips(current => [...current, trip]); await selectTrip(trip.id);
+  };
+  const updateTrip = async (data: { name: string; currency: string }) => {
+    const updated = payload<Trip>(await tripsApi.update(data));
+    setSelectedTrip(current => current ? { ...current, ...updated } : updated); setTrips(current => current.map(trip => trip.id === updated.id ? { ...trip, ...updated } : trip));
+  };
+  const logout = async () => { try { await authApi.logout(); } finally { localStorage.removeItem('token'); setUser(null); setTrips([]); setSelectedTrip(null); setRequiresTripSelection(false); } };
+  return <AuthContext.Provider value={{ user, trips, selectedTrip, requiresTripSelection, loading, login, selectTrip, createTrip, updateTrip, logout, isOwner: selectedTrip?.role === 'owner', isMember: selectedTrip?.role === 'member' }}>{children}</AuthContext.Provider>;
 };
-
 export const useAuth = () => useContext(AuthContext);

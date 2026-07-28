@@ -1,14 +1,18 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
-import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, LogOut, Languages, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, LogOut, Languages, Moon, Sun, Map } from 'lucide-react';
 
 export default function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, trips, selectedTrip, selectTrip } = useAuth();
+  const [permissionNotice, setPermissionNotice] = useState(false);
   const { language, theme, toggleLanguage, toggleTheme } = usePreferences();
   const location = useLocation();
   const fa = language === 'fa';
+  useEffect(() => { const show = () => setPermissionNotice(true); window.addEventListener('owner-permission-required', show); return () => window.removeEventListener('owner-permission-required', show); }, []);
   const nav = [
+    { name: fa ? 'سفرها' : 'Trips', path: '/trips', icon: Map, roles: ['owner', 'member'] },
     { name: fa ? 'داشبورد' : 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['owner', 'member'] },
     { name: fa ? 'اعضا' : 'Members', path: '/members', icon: Users, roles: ['owner'] },
     { name: fa ? 'واریزها' : 'Deposits', path: '/deposits', icon: ArrowDownToLine, roles: ['owner', 'member'] },
@@ -20,6 +24,7 @@ export default function AppLayout() {
     <div className="min-h-screen lg:flex">
       <aside className="glass-panel hidden w-72 flex-col border-y-0 border-l-0 rounded-none lg:fixed lg:inset-y-0 lg:flex">
         <Brand fa={fa} />
+        <TripSwitcher trips={trips} selectedTrip={selectedTrip} onSelect={selectTrip} />
         <Navigation
           nav={nav.filter(x => x.roles.includes(String(user?.role)))}
           pathname={location.pathname}
@@ -29,13 +34,14 @@ export default function AppLayout() {
       <div className="min-w-0 flex-1 lg:ml-72 rtl:lg:mr-72 rtl:lg:ml-0">
         <header className="glass-panel sticky top-0 z-20 border-x-0 border-t-0 rounded-none px-4 py-3 sm:px-6 lg:hidden">
           <div className="flex items-center justify-between gap-3"><Brand fa={fa} compact /><HeaderControls {...controls} /></div>
+          <TripSwitcher trips={trips} selectedTrip={selectedTrip} onSelect={selectTrip} compact />
           <Navigation
             nav={nav.filter(x => x.roles.includes(String(user?.role)))}
             pathname={location.pathname}
             mobile
           />
         </header>
-        <main className="mx-auto w-full max-w-7xl p-4 pb-10 sm:p-6 lg:p-8"><Outlet /></main>
+        <main className="mx-auto w-full max-w-7xl p-4 pb-10 sm:p-6 lg:p-8">{permissionNotice && <div role="alert" className="mb-4 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">Owner permission required<button onClick={() => setPermissionNotice(false)} className="ms-4 underline">Dismiss</button></div>}<Outlet /></main>
       </div>
     </div>
   );
@@ -56,6 +62,10 @@ function Brand({ compact = false, fa }: { compact?: boolean; fa: boolean }) {
       />
     </span>
     <span>{fa ? 'جیب‌به‌جیب' : 'Jib-be-Jib'}</span></div>;
+}
+
+function TripSwitcher({ trips, selectedTrip, onSelect, compact = false }: any) {
+  return <div className={compact ? 'mt-3' : 'px-4 pb-3'}><label className="sr-only" htmlFor="trip-switcher">Current trip</label><select id="trip-switcher" value={selectedTrip?.id || ''} onChange={event => onSelect(event.target.value)} className="select-control text-sm"><option value="" disabled>Select a trip</option>{trips.filter((trip: any) => trip.active !== false).map((trip: any) => <option key={trip.id} value={trip.id}>{trip.name} ({trip.currency})</option>)}</select></div>;
 }
 
 function Navigation({ nav, pathname, mobile = false }: any) {

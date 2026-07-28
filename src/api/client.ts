@@ -31,6 +31,12 @@ apiClient.interceptors.response.use(
     console.log('Headers:', error.response?.headers);
     console.log('Error:', error);
 
+    if (error.response?.status === 409) {
+      window.dispatchEvent(new Event('trip-selection-required'));
+    }
+    if (error.response?.status === 403) {
+      window.dispatchEvent(new Event('owner-permission-required'));
+    }
     // if (error.response?.status === 401) {
     //   window.dispatchEvent(new Event('auth-error'));
     // }

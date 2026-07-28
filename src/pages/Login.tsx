@@ -21,18 +21,12 @@ export default function Login() {
 
   const onSubmit = async (data:any)=>{
     try {
-      const res = await authApi.login(data);
-  
-      // const me = await authApi.me();
-
-      localStorage.setItem(
-        'token',
-        res.data.token
-      );
-  
-      login(res.data.user);
-      console.log("login okay")
-      navigate('/dashboard');
+      const res: any = await authApi.login(data);
+      const session = res.data ?? res;
+      if (session.token) localStorage.setItem('token', session.token);
+      login(session);
+      const activeTrips = (session.trips || []).filter((trip: any) => trip.active !== false);
+      navigate(activeTrips.length ? '/dashboard' : '/trips');
   
     } catch(e:any){
       alert(e.message || 'Login failed');

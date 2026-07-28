@@ -154,7 +154,7 @@ export default function Dashboard() {
             <Tbody>
               {data.members.map((m) => (
                 <Tr key={m.member_id}>
-                  <Td className="font-medium text-gray-900">{m.name}</Td>
+                  <Td className="font-medium text-gray-900">{m.display_name || m.name}</Td>
 
                   <Td className="text-right text-green-600 font-semibold">
                     ${m.total_deposited.toFixed(2)}
@@ -171,7 +171,7 @@ export default function Dashboard() {
                         ? 'text-amber-600'
                         : 'text-gray-600'
                   }`}>
-                    ${m.balance.toFixed(2)}
+                    {m.balance < 0 ? '-' : '+'}${Math.abs(m.balance).toFixed(2)}
                   </Td>
 
                 </Tr>
