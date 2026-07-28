@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log("AUTH ERROR EVENT");
     setUser(null);
   };
-
+  console.log(handleAuthError.toString())
   const login = (u: User) => setUser(u);
   const logout = async () => { await authApi.logout(); setUser(null); };
 
