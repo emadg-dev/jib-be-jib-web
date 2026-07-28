@@ -28,6 +28,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => window.removeEventListener('auth-error', handleAuthError);
   }, []);
 
+  useEffect(() => {
+
+    alert("Calling /auth/me");
+  
+    authApi.me()
+      .then((res) => {
+        alert("me success");
+        setUser(res.data);
+      })
+      .catch(() => {
+        alert("me failed");
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
+  
+  }, []);
+
   const login = (u: User) => setUser(u);
   const logout = async () => { await authApi.logout(); setUser(null); };
 
