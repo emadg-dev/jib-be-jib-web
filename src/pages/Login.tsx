@@ -24,9 +24,9 @@ export default function Login() {
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-muted/20">
-      <Card className="w-[400px]">
-        <CardHeader><CardTitle className="text-2xl text-center">Jib-be-Jib Login</CardTitle></CardHeader>
+    <div className="flex min-h-screen items-center justify-center p-4 sm:p-6">
+      <Card className="w-full max-w-md">
+        <CardHeader className="pt-8"><CardTitle className="text-center text-2xl">Welcome back to Jib-be-Jib</CardTitle><p className="mt-2 text-center text-sm text-slate-500">Sign in to manage your trip together.</p></CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>

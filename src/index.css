@@ -1,111 +1,52 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+    --background: 225 38% 96%;
+    --foreground: 229 32% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 229 32% 16%;
+    --primary: 245 75% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 250 55% 96%;
+    --secondary-foreground: 245 55% 36%;
+    --muted: 224 27% 93%;
+    --muted-foreground: 224 13% 45%;
+    --destructive: 0 72% 54%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 225 30% 87%;
+    --input: 225 27% 84%;
+    --ring: 245 75% 58%;
+    --radius: 1rem;
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  * { @apply border-border; }
+  html { @apply min-h-full bg-slate-100; }
+  body {
+    @apply min-h-screen bg-slate-100 text-foreground antialiased;
+    background-image: radial-gradient(circle at 8% 8%, rgba(129, 140, 248, .22), transparent 30rem), radial-gradient(circle at 92% 14%, rgba(45, 212, 191, .16), transparent 28rem), linear-gradient(135deg, #f8faff 0%, #eef2ff 47%, #f5f7ff 100%);
   }
+  button, input, select { font: inherit; }
+  button { -webkit-tap-highlight-color: transparent; }
+  h1, h2, h3, p { margin: 0; }
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+@layer components {
+  .glass-panel {
+    @apply border border-white/70 bg-white/65 shadow-[0_16px_50px_rgba(67,56,202,0.10)];
+    backdrop-filter: blur(18px) saturate(150%);
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+
+  .page-title { @apply text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl; }
+  .page-subtitle { @apply mt-1 text-sm text-slate-500; }
+  .form-grid { @apply grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4; }
+  .form-field { @apply min-w-0; }
+  .form-label { @apply mb-1.5 block text-sm font-semibold text-slate-700; }
+  .select-control { @apply flex h-11 w-full rounded-xl border border-white/80 bg-white/65 px-3 text-sm text-slate-700 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100; }
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+@media (max-width: 639px) {
+  .recharts-legend-wrapper { font-size: 11px !important; }
 }

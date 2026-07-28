@@ -49,20 +49,20 @@ export default function Withdrawals() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Withdrawals (Expenses)</h1>
+      <div><h1 className="page-title">Expenses</h1><p className="page-subtitle">Record shared costs and split them fairly.</p></div>
 
       <Card>
         <CardHeader><CardTitle>Record Expense</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={handleAdd} className="space-y-4">
-            <div className="flex gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <div className="flex-1">
                 <label className="text-sm font-medium">Description</label>
                 <Input value={description} onChange={e => setDescription(e.target.value)} required />
               </div>
               <div className="flex-1">
                 <label className="text-sm font-medium">Category</label>
-                <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 mt-1" value={category} onChange={e => setCategory(e.target.value)} required>
+                <select className="select-control" value={category} onChange={e => setCategory(e.target.value)} required>
                   <option value="">Select Category</option>
                   <option value="Food">Food</option>
                   <option value="Accommodation">Accommodation</option>
@@ -79,9 +79,9 @@ export default function Withdrawals() {
             
             <div>
               <label className="text-sm font-medium">Split Among (Equally)</label>
-              <div className="flex gap-4 mt-2 flex-wrap">
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {members?.data?.map(m => (
-                  <label key={m.id} className="flex items-center gap-2 border p-2 rounded-md cursor-pointer hover:bg-muted">
+                  <label key={m.id} className="flex min-h-11 items-center gap-2 rounded-xl border border-white/80 bg-white/50 p-3 text-sm font-medium text-slate-700 cursor-pointer transition hover:bg-white">
                     <input type="checkbox" checked={selectedMembers.includes(m.id)} onChange={() => toggleMember(m.id)} className="h-4 w-4" />
                     {m.name}
                   </label>
@@ -89,7 +89,7 @@ export default function Withdrawals() {
               </div>
             </div>
 
-            <Button type="submit">Record Expense</Button>
+            <Button type="submit" className="w-full sm:w-auto">Record expense</Button>
           </form>
         </CardContent>
       </Card>

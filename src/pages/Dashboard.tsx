@@ -16,9 +16,10 @@ export default function Dashboard() {
   if (!data) return null;
 
   return (
-    <div className="space-y-6 pb-12">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Trip Dashboard</h1>
+    <div className="space-y-6 pb-4">
+      <div>
+        <h1 className="page-title">Trip dashboard</h1>
+        <p className="page-subtitle">A clear view of your shared trip budget.</p>
       </div>
       
       {/* Top Summary Cards */}

@@ -34,18 +34,15 @@ export default function Deposits() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Deposits</h1>
-      </div>
+      <div><h1 className="page-title">Deposits</h1><p className="page-subtitle">Log contributions and keep the shared budget current.</p></div>
 
       <Card>
         <CardHeader><CardTitle>Add New Deposit</CardTitle></CardHeader>
         <CardContent>
-          <form onSubmit={handleAdd} className="flex gap-4 items-end">
+          <form onSubmit={handleAdd} className="form-grid items-end">
             <div className="flex-1">
               <label className="text-sm font-medium">Member</label>
-              <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm mt-1" 
-                      value={memberId} onChange={e => setMemberId(e.target.value)} required>
+              <select className="select-control" value={memberId} onChange={e => setMemberId(e.target.value)} required>
                 <option value="">Select Member</option>
                 {members?.data?.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
@@ -58,7 +55,7 @@ export default function Deposits() {
               <label className="text-sm font-medium">Note (Optional)</label>
               <Input value={note} onChange={e => setNote(e.target.value)} className="mt-1" />
             </div>
-            <Button type="submit">Add Deposit</Button>
+            <Button type="submit" className="w-full xl:w-auto">Add Deposit</Button>
           </form>
         </CardContent>
       </Card>

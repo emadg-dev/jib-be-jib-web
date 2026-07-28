@@ -25,12 +25,12 @@ export default function Members() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Members</h1>
+      <div><h1 className="page-title">Members</h1><p className="page-subtitle">Manage who can contribute to the trip.</p></div>
 
       <Card>
         <CardHeader><CardTitle>Add Member</CardTitle></CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex gap-4 items-end">
+          <form onSubmit={handleSubmit(onSubmit)} className="form-grid items-end">
             <div className="flex-1">
               <label className="text-sm font-medium">Name</label>
               <Input {...register('name', { required: true })} className="mt-1" />
@@ -41,12 +41,12 @@ export default function Members() {
             </div>
             <div className="flex-1">
               <label className="text-sm font-medium">Role</label>
-              <select {...register('role')} className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 mt-1">
+              <select {...register('role')} className="select-control">
                 <option value="member">Member</option>
                 <option value="owner">Owner</option>
               </select>
             </div>
-            <Button type="submit">Add Member</Button>
+            <Button type="submit" className="w-full xl:w-auto">Add Member</Button>
           </form>
         </CardContent>
       </Card>
