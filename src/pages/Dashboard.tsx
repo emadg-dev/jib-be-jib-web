@@ -67,7 +67,7 @@ export default function Dashboard() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 
-        <Card className="bg-white shadow-sm border border-gray-100">
+        <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">
               {fa ? 'موجودی حساب' : 'Bank Balance'}
@@ -76,14 +76,14 @@ export default function Dashboard() {
           </CardHeader>
 
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              ${data.currentBankBalance.toFixed(2)}
-            </div>
+          <div className="text-2xl font-bold text-foreground">
+            ${data.currentBankBalance.toFixed(2)}
+          </div>
           </CardContent>
         </Card>
 
 
-        <Card className="bg-white shadow-sm border border-gray-100">
+        <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">
               {fa ? 'کل واریزی‌ها' : 'Total Deposits'}
@@ -99,7 +99,7 @@ export default function Dashboard() {
         </Card>
 
 
-        <Card className="bg-white shadow-sm border border-gray-100">
+        <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">
               {fa ? 'کل خرج‌ها' : 'Total Withdrawals'}
@@ -115,7 +115,7 @@ export default function Dashboard() {
         </Card>
 
 
-        <Card className="bg-white shadow-sm border border-gray-100">
+        <Card className="shadow-sm items-center justify-between">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">
               {fa ? 'اعضای فعال' : 'Active Members'}
@@ -123,17 +123,17 @@ export default function Dashboard() {
             <Users className="w-5 h-5 text-blue-600" />
           </CardHeader>
 
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              {data.members.length}
-            </div>
+          <CardContent className="flex flex-row items-center justify-between">
+          <div className=" text-2xl font-medium text-foreground">
+            {data.members.length}
+          </div>
           </CardContent>
         </Card>
 
       </div>
 
 
-      <Card className="bg-white shadow-sm border border-gray-100">
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
             {fa ? 'وضعیت حساب اعضا' : 'Member Financial Breakdown'}
@@ -184,7 +184,7 @@ export default function Dashboard() {
 
       <div className="grid gap-4 md:grid-cols-2">
 
-        <Card className="bg-white shadow-sm border border-gray-100">
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">
               {fa ? 'مانده حساب اعضا' : 'Member Net Balances'}
@@ -213,7 +213,7 @@ export default function Dashboard() {
         </Card>
 
 
-        <Card className="bg-white shadow-sm border border-gray-100">
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">
               {fa ? 'هزینه‌ها بر اساس دسته‌بندی' : 'Expenses by Category'}
@@ -262,7 +262,7 @@ export default function Dashboard() {
       </div>
 
 
-      <Card className="bg-white shadow-sm border border-gray-100">
+      <Card className="shadow-sm">
 
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -303,7 +303,11 @@ export default function Dashboard() {
                       {s.fromName}
                     </span>
 
-                    <ArrowRight className="w-4 h-4 text-indigo-600" />
+                    <ArrowRight
+                      className={`w-4 h-4 text-indigo-600 ${
+                        fa ? 'rotate-180' : ''
+                      }`}
+                    />
 
                     <span className="font-semibold text-gray-900">
                       {s.toName}

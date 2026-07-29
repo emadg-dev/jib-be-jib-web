@@ -147,31 +147,31 @@ export default function Members() {
             <div className="flex-1"><label className="text-sm font-medium">{fa ? 'نام نمایشی' : 'Display name'}</label><Input {...register('display_name', { required: true })} className="mt-1" /></div>
 
             <div className="flex-1">
-  <label className="text-sm font-medium">
-    {fa ? 'رمز عبور' : 'Password'}
-  </label>
+              <label className="text-sm font-medium">
+                {fa ? 'رمز عبور' : 'Password'}
+              </label>
 
-  <div className="relative mt-1">
-    <Input
-      type={showPassword ? 'text' : 'password'}
-      {...register('password')}
-      className="pe-10"
-      placeholder={
-        editingMember
-          ? (fa ? 'خالی بگذارید بدون تغییر بماند' : 'Leave empty to keep current')
-          : ''
-      }
-    />
+              <div className="relative mt-1">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password')}
+                  className="pe-10"
+                  placeholder={
+                    editingMember
+                      ? (fa ? 'خالی بگذارید بدون تغییر بماند' : 'Leave empty to keep current')
+                      : ''
+                  }
+                />
 
-    <button
-      type="button"
-      onClick={() => setShowPassword(!showPassword)}
-      className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-700"
-    >
-      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-    </button>
-  </div>
-</div>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-700"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
 
 
             <div className="flex-1">
@@ -289,7 +289,7 @@ export default function Members() {
                           variant="secondary"
                           onClick={() => editMember(m)}
                         >
-                          <Pencil size={16}/>
+                          <Pencil size={16} />
                           {fa ? 'ویرایش' : 'Edit'}
                         </Button>
 
