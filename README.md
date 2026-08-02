@@ -21,22 +21,9 @@
 4. Start frontend: `npm run dev`
 5. Navigate to `http://localhost:3000`
 
-## Cloudflare Deployment
+## Deployment
 
-### Deploying the Database (D1)
-1. Authenticate with Cloudflare: `npx wrangler login`
-2. Create D1 Database: `npx wrangler d1 create jib-be-jib-db`
-3. Copy the `database_id` outputted in the terminal and replace `REPLACE_WITH_YOUR_D1_ID` in `jib-be-jib-api/wrangler.jsonc`.
-4. Run schema on production: `npm run db:init:prod` (Run from API folder).
-5. (Optional) Run seed on production: `npm run db:seed:prod`.
-
-### Deploying the Backend (Workers)
-1. Inside `jib-be-jib-api`, run `npm run deploy`
-2. Add the `JWT_SECRET` variable in Cloudflare dashboard under your Worker -> Settings -> Variables.
-3. Note your worker URL (e.g., `https://jib-be-jib-api.<your-username>.workers.dev`).
-
-### Deploying the Frontend (Pages)
-1. Create a `.env.production` in `jib-be-jib-web` containing:
-   `VITE_API_URL=https://jib-be-jib-api.<your-username>.workers.dev/api`
-2. Run build: `npm run build`
-3. Deploy to Cloudflare Pages: `npx wrangler pages deploy dist --project-name jib-be-jib-web`
+- This project can be hosted on any static hosting provider for the frontend and any HTTP server for the backend.
+- In production set `VITE_API_URL` to your backend API base URL (e.g. `https://api.example.com/api`) in a `.env.production` file inside `jib-be-jib-web`.
+- Build the frontend with `npm run build` and deploy the resulting `dist` directory to your chosen hosting provider.
+- The backend (in `jib-be-jib-api`) can be deployed to any environment that supports the chosen runtime. Follow the backend README for deployment steps.
