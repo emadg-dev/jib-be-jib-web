@@ -122,12 +122,12 @@ function HeaderControls({
         </Link>
       )}
 
-      <LogoutButton
+      <ControlButton
         label={fa ? 'خروج' : 'Log out'}
         onClick={logout}
       >
         <LogOut size={19} />
-      </LogoutButton>
+      </ControlButton>
     </div>
   );
 }
@@ -156,19 +156,6 @@ function ControlButton({ children, label, onClick, loading = false, disabled = f
   </button>;
 }
 
-function LogoutButton({ children, label, logout }: any) {
-  const [loading, setLoading] = useState(false);
-  const handle = async () => {
-    if (loading) return;
-    try {
-      setLoading(true);
-      await logout();
-    } finally {
-      setLoading(false);
-    }
-  };
-  return <ControlButton label={label} onClick={handle} loading={loading}>{children}</ControlButton>;
-}
 function UserMenu({ name, ...controls }: any) {
   return (
     <div className="m-4 rounded-2xl border border-border bg-card/60 backdrop-blur p-3">
