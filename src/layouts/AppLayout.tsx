@@ -122,12 +122,12 @@ function HeaderControls({
         </Link>
       )}
 
-      <ControlButton
+      <LogoutButton
         label={fa ? 'خروج' : 'Log out'}
         onClick={logout}
       >
         <LogOut size={19} />
-      </ControlButton>
+      </LogoutButton>
     </div>
   );
 }
