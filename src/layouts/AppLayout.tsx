@@ -34,7 +34,10 @@ export default function AppLayout() {
       </aside>
       <div className="min-w-0 flex-1 lg:ml-72 rtl:lg:mr-72 rtl:lg:ml-0">
         <header className="glass-panel sticky top-0 z-20 border-x-0 border-t-0 rounded-none px-4 py-3 sm:px-6 lg:hidden">
-          <div className="flex items-center justify-between gap-3"><Brand fa={fa} compact /><HeaderControls {...controls} /></div>
+          <div className="flex items-center justify-between gap-3"><Brand fa={fa} compact /><HeaderControls
+              {...controls}
+              user={user}
+            /></div>
           <TripSwitcher trips={trips} selectedTrip={selectedTrip} onSelect={selectTrip} compact />
           <Navigation
             nav={nav.filter(x => x.roles.includes(String(user?.role)))}
@@ -75,8 +78,58 @@ function Navigation({ nav, pathname, mobile = false }: any) {
   </nav>;
 }
 
-function HeaderControls({ language, theme, toggleLanguage, toggleTheme, logout, fa }: any) {
-  return <div className="flex items-center gap-1"><ControlButton label={language === 'en' ? 'فارسی' : 'English'} onClick={toggleLanguage}><Languages size={18} /><span className="hidden sm:inline">{language === 'en' ? 'فا' : 'EN'}</span></ControlButton><ControlButton label={theme === 'light' ? (fa ? 'حالت تیره' : 'Dark mode') : (fa ? 'حالت روشن' : 'Light mode')} onClick={toggleTheme}>{theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}</ControlButton><LogoutButton label={fa ? 'خروج' : 'Log out'} logout={logout}><LogOut size={19} /></LogoutButton></div>;
+function HeaderControls({
+  language,
+  theme,
+  toggleLanguage,
+  toggleTheme,
+  logout,
+  fa,
+  user,
+}: any) {
+  return (
+    <div className="flex items-center gap-2">
+      <ControlButton
+        label={language === 'en' ? 'فارسی' : 'English'}
+        onClick={toggleLanguage}
+      >
+        <Languages size={18} />
+        <span className="hidden sm:inline">
+          {language === 'en' ? 'فا' : 'EN'}
+        </span>
+      </ControlButton>
+
+      <ControlButton
+        label={
+          theme === 'light'
+            ? (fa ? 'حالت تیره' : 'Dark mode')
+            : (fa ? 'حالت روشن' : 'Light mode')
+        }
+        onClick={toggleTheme}
+      >
+        {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+      </ControlButton>
+
+      {user && (
+        <Link
+          to="/profile"
+          aria-label={fa ? 'پروفایل' : 'Profile'}
+          className="grid h-10 w-10 place-items-center rounded-xl transition-colors hover:bg-accent"
+        >
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
+            {user.name?.slice(0, 1).toUpperCase() || 'U'}
+          </div>
+        </Link>
+      )}
+
+      <ControlButton
+        label={fa ? 'خروج' : 'Log out'}
+        onClick={logout}
+      >
+        <LogOut size={19} />
+      </ControlButton>
+    </div>
+  );
 }
 
 function ControlButton({ children, label, onClick, loading = false, disabled = false }: any) {
@@ -118,7 +171,7 @@ function LogoutButton({ children, label, logout }: any) {
 }
 function UserMenu({ name, ...controls }: any) {
   return (
-    <div className="m-4 rounded-2xl border border-border bg-card/60 p-3">
+    <div className="m-4 rounded-2xl border border-border bg-card/60 backdrop-blur p-3">
       <Link
         to="/profile"
         className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-accent"
@@ -133,7 +186,7 @@ function UserMenu({ name, ...controls }: any) {
       </Link>
 
       <div className="mt-3 border-t border-border pt-2">
-        <HeaderControls {...controls} />
+      <HeaderControls {...controls} />
       </div>
     </div>
   );
