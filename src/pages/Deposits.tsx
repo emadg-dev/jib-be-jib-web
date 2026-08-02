@@ -30,6 +30,7 @@ export default function Deposits() {
   const [note, setNote] = useState('');
   const [memberId, setMemberId] = useState('');
   const [editing, setEditing] = useState<Deposit | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
 
   const { data: deposits } = useQuery({
@@ -97,6 +98,8 @@ export default function Deposits() {
       ? update.mutate({ id: editing.id, data })
       : create.mutate(data);
   };
+
+  const submitting = create.isPending || update.isPending;
 
 
   return (
@@ -209,7 +212,7 @@ export default function Deposits() {
 
             <div className="flex gap-2">
 
-              <Button type="submit">
+              <Button type="submit" loading={submitting}>
 
                 {
                   editing
@@ -313,7 +316,17 @@ export default function Deposits() {
 
                           <Button
                             variant="destructive"
-                            onClick={() => remove.mutate(d.id)}
+                            loading={deletingId === d.id}
+                            disabled={deletingId === d.id}
+                            onClick={async () => {
+                              if (deletingId) return;
+                              try {
+                                setDeletingId(d.id);
+                                await remove.mutateAsync(d.id);
+                              } finally {
+                                setDeletingId(null);
+                              }
+                            }}
                           >
                             {fa ? 'حذف' : 'Delete'}
                           </Button>

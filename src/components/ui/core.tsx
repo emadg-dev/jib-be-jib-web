@@ -53,6 +53,7 @@ export const Button = ({
   children,
   variant = 'primary',
   className = '',
+  loading = false,
   ...props
 }: any) => {
 
@@ -116,9 +117,18 @@ export const Button = ({
 
   return (
     <button
+      aria-busy={loading}
+      disabled={props.disabled || loading}
       className={`${base} ${variants[variant as keyof typeof variants]} ${className}`}
       {...props}
     >
+      {loading && (
+        <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden>
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+      )}
+
       {children}
     </button>
   );

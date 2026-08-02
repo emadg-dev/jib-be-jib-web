@@ -21,6 +21,7 @@ export const tripsApi = {
   create: (data: { name: string; currency: string }) => apiClient.post<Trip>('/trip', data),
   get: () => apiClient.get<Trip>('/trip'),
   update: (data: Partial<Trip>) => apiClient.put<Trip>('/trip', data),
+  delete: (id: string) => apiClient.delete(`/trip/delete/${id}`),
 };
 export const dashboardApi = { get: () => apiClient.get<DashboardData>('/dashboard') };
 export const membersApi = {
@@ -32,3 +33,7 @@ export const membersApi = {
 };
 export const depositsApi = { getAll: () => apiClient.get<Deposit[]>('/deposits'), create: (data: any) => apiClient.post('/deposits', data), update: (id: string, data: any) => apiClient.put(`/deposits/${id}`, data), delete: (id: string) => apiClient.delete(`/deposits/${id}`) };
 export const withdrawalsApi = { getAll: () => apiClient.get<Withdrawal[]>('/withdrawals'), create: (data: any) => apiClient.post('/withdrawals', data), update: (id: string, data: any) => apiClient.put(`/withdrawals/${id}`, data), delete: (id: string) => apiClient.delete(`/withdrawals/${id}`) };
+export const profileApi = {
+  get: () => apiClient.get<User>('/profile'),
+  changePassword: (data: { current_password: string; new_password: string }) => apiClient.put('/profile/password', data),
+};

@@ -16,6 +16,7 @@ export default function Members() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [editingMember, setEditingMember] = useState<any>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: members } = useQuery({
     queryKey: ['members'],
@@ -74,6 +75,8 @@ export default function Members() {
     }
 
   };
+
+  const submitting = createMutation.isPending || updateMutation.isPending;
 
 
   const editMember = (member: any) => {
@@ -201,7 +204,7 @@ export default function Members() {
 
             <div className="flex gap-2">
 
-              <Button type="submit" className="w-full xl:w-auto">
+              <Button type="submit" className="w-full xl:w-auto" loading={submitting}>
 
                 {
                   editingMember
@@ -298,7 +301,17 @@ export default function Members() {
                           m.role !== 'owner' &&
                           <Button
                             variant="destructive"
-                            onClick={() => deleteMutation.mutate(m.id)}
+                            loading={deletingId === m.id}
+                            disabled={deletingId === m.id}
+                            onClick={async () => {
+                              if (deletingId) return;
+                              try {
+                                setDeletingId(m.id);
+                                await deleteMutation.mutateAsync(m.id);
+                              } finally {
+                                setDeletingId(null);
+                              }
+                            }}
                           >
                             {fa ? 'حذف' : 'Remove'}
                           </Button>

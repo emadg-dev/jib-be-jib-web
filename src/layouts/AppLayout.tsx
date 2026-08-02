@@ -12,11 +12,12 @@ export default function AppLayout() {
   const fa = language === 'fa';
   useEffect(() => { const show = () => setPermissionNotice(true); window.addEventListener('owner-permission-required', show); return () => window.removeEventListener('owner-permission-required', show); }, []);
   const nav = [
-    { name: fa ? 'سفرها' : 'Trips', path: '/trips', icon: Map, roles: ['owner', 'member'] },
     { name: fa ? 'داشبورد' : 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['owner', 'member'] },
     { name: fa ? 'اعضا' : 'Members', path: '/members', icon: Users, roles: ['owner'] },
     { name: fa ? 'واریزها' : 'Deposits', path: '/deposits', icon: ArrowDownToLine, roles: ['owner', 'member'] },
     { name: fa ? 'هزینه‌ها' : 'Expenses', path: '/withdrawals', icon: ArrowUpFromLine, roles: ['owner', 'member'] },
+    { name: fa ? 'سفرها' : 'Trips', path: '/trips', icon: Map, roles: ['owner', 'member'] },
+    // { name: fa ? 'پروفایل' : 'Profile', path: '/profile', icon: User, roles: ['owner', 'member'] },
   ];
   const controls = { language, theme, toggleLanguage, toggleTheme, logout, fa };
 
@@ -24,7 +25,7 @@ export default function AppLayout() {
     <div className="min-h-screen lg:flex">
       <aside className="glass-panel hidden w-72 flex-col border-y-0 border-l-0 rounded-none lg:fixed lg:inset-y-0 lg:flex">
         <Brand fa={fa} />
-        <TripSwitcher trips={trips} selectedTrip={selectedTrip} onSelect={selectTrip} />
+        {/* <TripSwitcher trips={trips} selectedTrip={selectedTrip} onSelect={selectTrip} /> */}
         <Navigation
           nav={nav.filter(x => x.roles.includes(String(user?.role)))}
           pathname={location.pathname}
@@ -70,12 +71,70 @@ function TripSwitcher({ trips, selectedTrip, onSelect, compact = false }: any) {
 
 function Navigation({ nav, pathname, mobile = false }: any) {
   return <nav className={mobile ? 'mt-3 -mx-1 flex gap-1 overflow-x-auto pb-0.5' : 'flex flex-1 flex-col gap-1 px-4'} aria-label="Main navigation">
-    {nav.map((item: any) => { const Icon = item.icon; const active = pathname.startsWith(item.path); return <Link key={item.name} to={item.path} className={`${mobile ? 'shrink-0 px-3 py-2 text-xs' : 'px-4 py-3 text-sm'} flex items-center gap-2.5 rounded-xl font-semibold transition ${active ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-500 hover:bg-white/65 hover:text-indigo-700'}`}><Icon size={mobile ? 16 : 19} /><span>{item.name}</span></Link>; })}
+    {nav.map((item: any) => { const Icon = item.icon; const active = pathname.startsWith(item.path); return <Link key={item.name} to={item.path} className={`${mobile ? 'shrink-0 px-3 py-2 text-xs' : 'px-4 py-3 text-sm'} flex items-center gap-2.5 rounded-xl font-semibold transition ${active ? 'bg-indigo-600 text-white shadow-indigo-200' : 'text-slate-500 hover:bg-white/65 hover:text-indigo-700'}`}><Icon size={mobile ? 16 : 19} /><span>{item.name}</span></Link>; })}
   </nav>;
 }
 
 function HeaderControls({ language, theme, toggleLanguage, toggleTheme, logout, fa }: any) {
-  return <div className="flex items-center gap-1"><ControlButton label={language === 'en' ? 'فارسی' : 'English'} onClick={toggleLanguage}><Languages size={18} /><span className="hidden sm:inline">{language === 'en' ? 'فا' : 'EN'}</span></ControlButton><ControlButton label={theme === 'light' ? (fa ? 'حالت تیره' : 'Dark mode') : (fa ? 'حالت روشن' : 'Light mode')} onClick={toggleTheme}>{theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}</ControlButton><ControlButton label={fa ? 'خروج' : 'Log out'} onClick={logout}><LogOut size={19} /></ControlButton></div>;
+  return <div className="flex items-center gap-1"><ControlButton label={language === 'en' ? 'فارسی' : 'English'} onClick={toggleLanguage}><Languages size={18} /><span className="hidden sm:inline">{language === 'en' ? 'فا' : 'EN'}</span></ControlButton><ControlButton label={theme === 'light' ? (fa ? 'حالت تیره' : 'Dark mode') : (fa ? 'حالت روشن' : 'Light mode')} onClick={toggleTheme}>{theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}</ControlButton><LogoutButton label={fa ? 'خروج' : 'Log out'} logout={logout}><LogOut size={19} /></LogoutButton></div>;
 }
-function ControlButton({ children, label, onClick }: any) { return <button aria-label={label} title={label} onClick={onClick} className="flex min-h-10 items-center gap-1 rounded-xl p-2 text-slate-500 transition hover:bg-white/70 hover:text-indigo-600">{children}</button>; }
-function UserMenu({ name, ...controls }: any) { return <div className="m-4 rounded-2xl border border-white/70 bg-white/45 p-3"><div className="flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-700">{name?.slice(0, 1).toUpperCase() || 'U'}</div><span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700">{name}</span></div><div className="mt-3 flex gap-1 border-t border-white/70 pt-2"><HeaderControls {...controls} /></div></div>; }
+
+function ControlButton({ children, label, onClick, loading = false, disabled = false }: any) {
+  return <button
+    aria-label={label}
+    title={label}
+    onClick={onClick}
+    disabled={disabled || loading}
+    className="
+      flex min-h-10 items-center gap-1 rounded-xl p-2
+      text-muted-foreground
+      transition-colors
+      hover:bg-accent
+      hover:text-accent-foreground
+      "
+  >
+    {loading && (
+      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden>
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+    )}
+    {children}
+  </button>;
+}
+
+function LogoutButton({ children, label, logout }: any) {
+  const [loading, setLoading] = useState(false);
+  const handle = async () => {
+    if (loading) return;
+    try {
+      setLoading(true);
+      await logout();
+    } finally {
+      setLoading(false);
+    }
+  };
+  return <ControlButton label={label} onClick={handle} loading={loading}>{children}</ControlButton>;
+}
+function UserMenu({ name, ...controls }: any) {
+  return (
+    <div className="m-4 rounded-2xl border border-border bg-card/60 p-3">
+      <Link
+        to="/profile"
+        className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-accent"
+      >
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
+          {name?.slice(0, 1).toUpperCase() || 'U'}
+        </div>
+
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+          {name}
+        </span>
+      </Link>
+
+      <div className="mt-3 border-t border-border pt-2">
+        <HeaderControls {...controls} />
+      </div>
+    </div>
+  );
+}

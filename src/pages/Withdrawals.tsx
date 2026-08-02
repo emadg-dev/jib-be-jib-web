@@ -50,6 +50,7 @@ export default function Withdrawals() {
   const [selected, setSelected] = useState<string[]>([]);
   const [shares, setShares] = useState<Shares>({});
   const [editing, setEditing] = useState<Withdrawal | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const active =
     members?.data?.filter((member) => member.active !== false) || [];
@@ -167,6 +168,8 @@ export default function Withdrawals() {
       create.mutate(data);
     }
   };
+
+  const submitting = create.isPending || update.isPending;
 
   const edit = (withdrawal: Withdrawal) => {
     setEditing(withdrawal);
@@ -387,7 +390,7 @@ export default function Withdrawals() {
               </div>
 
               <div className="flex gap-2">
-                <Button type="submit">
+                <Button type="submit" loading={submitting}>
                   {editing
                     ? fa
                       ? 'ذخیره تغییرات'
@@ -494,9 +497,17 @@ export default function Withdrawals() {
 
                         <Button
                           variant="destructive"
-                          onClick={() =>
-                            remove.mutate(withdrawal.id)
-                          }
+                          loading={deletingId === withdrawal.id}
+                          disabled={deletingId === withdrawal.id}
+                          onClick={async () => {
+                            if (deletingId) return;
+                            try {
+                              setDeletingId(withdrawal.id);
+                              await remove.mutateAsync(withdrawal.id);
+                            } finally {
+                              setDeletingId(null);
+                            }
+                          }}
                         >
                           {fa ? 'حذف' : 'Delete'}
                         </Button>

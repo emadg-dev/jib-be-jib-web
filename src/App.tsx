@@ -10,6 +10,7 @@ import Members from './pages/Members';
 import Deposits from './pages/Deposits';
 import Withdrawals from './pages/Withdrawals';
 import TripPicker from './pages/TripPicker';
+import Profile from './pages/Profile';
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const AppRoutes = () => {
       <Route path="members"element={<RoleRoute roles={['owner']}><Members /></RoleRoute>}/>
       <Route path="deposits" element={<Deposits />} />
       <Route path="withdrawals" element={<Withdrawals />} />
+      <Route path="profile" element={<Profile />} />
     </Route>
   </Routes>
   );

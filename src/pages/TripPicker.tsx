@@ -20,6 +20,7 @@ export default function TripPicker() {
     selectTrip,
     createTrip,
     updateTrip,
+    deleteTrip,
     logout,
     isOwner
   } = useAuth();
@@ -31,11 +32,11 @@ export default function TripPicker() {
 
   const [name, setName] = useState('');
   const [currency, setCurrency] = useState('USD');
-  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const active = trips.filter(t => t.active !== false);
+  const [creating, setCreating] = useState(active.length === 0);
 
   const choose = async (id: string, goToDashboard = true) => {
     setBusy(true);
@@ -59,6 +60,16 @@ export default function TripPicker() {
 
     setCreating(false);
     setEditing(true);
+  };
+
+  const deleteCurrentTrip = async (id: string) => {
+    setBusy(true);
+    try {
+      await deleteTrip(id);
+    }
+    finally {
+      setBusy(false);
+    }
   };
 
   const save = async (
@@ -145,7 +156,19 @@ export default function TripPicker() {
 
           )}
 
+          {active.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
+              <h3 className="text-lg font-semibold">
+                {fa ? 'هنوز سفری وجود ندارد' : 'No trips yet'}
+              </h3>
 
+              <p className="mt-2 text-sm text-muted-foreground">
+                {fa
+                  ? 'اولین سفر خود را ایجاد کنید.'
+                  : 'There are no trips yet. Would you like to create a new trip?'}
+              </p>
+            </div>
+          ) : (
           <div className="grid gap-4 md:grid-cols-2">
 
             {active.map(trip => (
@@ -209,7 +232,7 @@ export default function TripPicker() {
                         variant="destructive"
                         disabled={busy}
                         onClick={() => {
-                          console.log('Delete trip', trip.id);
+                          deleteCurrentTrip(trip.id);
                         }}
                       >
                         <Trash2 size={16} />
@@ -226,7 +249,7 @@ export default function TripPicker() {
             ))}
 
           </div>
-
+          )}
 
           {isOwner && (
 
