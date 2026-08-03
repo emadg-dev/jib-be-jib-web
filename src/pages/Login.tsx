@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../contexts/AuthContext';
 import { authApi } from '../api/services';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '../components/ui/core';
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, Label } from '../components/ui/core';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -84,33 +84,48 @@ export default function Login() {
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <Input placeholder={fa ? 'نام کاربری' : 'Username'} {...register('name')} />
-              {errors.name && <span className="text-sm text-destructive">{(errors.name as any).message}</span>}
+              <Label htmlFor="username">{fa ? 'نام کاربری' : 'Username'}</Label>
+              <Input
+                id="username"
+                placeholder={fa ? 'نام کاربری خود را وارد کنید' : 'Enter your username'}
+                className={errors.name ? 'border-destructive focus:border-destructive focus:ring-destructive/20' : ''}
+                {...register('name')}
+              />
+              {errors.name && (
+                <span className="mt-1.5 block text-xs font-medium text-destructive">
+                  {(errors.name as any).message}
+                </span>
+              )}
             </div>
+
             <div>
+              <Label htmlFor="password">{fa ? 'رمز عبور' : 'Password'}</Label>
               <div className="relative">
                 <Input
+                  id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder={fa ? 'رمز عبور' : 'Password'}
+                  placeholder={fa ? 'رمز عبور خود را وارد کنید' : 'Enter your password'}
+                  className={`pe-10 ${errors.password ? 'border-destructive focus:border-destructive focus:ring-destructive/20' : ''}`}
                   {...register('password')}
                 />
                 <button
                   type="button"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute end-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-500 hover:text-slate-700"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
-                {errors.password && (
-                  <span className="text-sm text-destructive">
-                    {(errors.password as any).message}
-                  </span>
-                )}
               </div>
+              {errors.password && (
+                <span className="mt-1.5 block text-xs font-medium text-destructive">
+                  {(errors.password as any).message}
+                </span>
+              )}
             </div>
+
             <Button type="submit" className="w-full">{fa ? 'ورود' : 'Sign in'}</Button>
           </form>
         </CardContent>

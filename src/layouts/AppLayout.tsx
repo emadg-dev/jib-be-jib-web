@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, LogOut, Languages, Moon, Sun, Map } from 'lucide-react';
+import { Select } from '../components/ui/core';
 
 export default function AppLayout() {
   const { user, logout, trips, selectedTrip, selectTrip } = useAuth();
@@ -69,7 +70,7 @@ function Brand({ compact = false, fa }: { compact?: boolean; fa: boolean }) {
 }
 
 function TripSwitcher({ trips, selectedTrip, onSelect, compact = false }: any) {
-  return <div className={compact ? 'mt-3' : 'px-4 pb-3'}><label className="sr-only" htmlFor="trip-switcher">Current trip</label><select id="trip-switcher" value={selectedTrip?.id || ''} onChange={event => onSelect(event.target.value)} className="select-control text-sm"><option value="" disabled>Select a trip</option>{trips.filter((trip: any) => trip.active !== false).map((trip: any) => <option key={trip.id} value={trip.id}>{trip.name} ({trip.currency})</option>)}</select></div>;
+  return <div className={compact ? 'mt-3' : 'px-4 pb-3'}><label className="sr-only" htmlFor="trip-switcher">Current trip</label><Select id="trip-switcher" value={selectedTrip?.id || ''} onChange={event => onSelect(event.target.value)}><option value="" disabled>Select a trip</option>{trips.filter((trip: any) => trip.active !== false).map((trip: any) => <option key={trip.id} value={trip.id}>{trip.name} ({trip.currency})</option>)}</Select></div>;
 }
 
 function Navigation({ nav, pathname, mobile = false }: any) {

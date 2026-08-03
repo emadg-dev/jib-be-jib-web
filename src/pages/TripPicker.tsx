@@ -10,7 +10,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  Input
+  Input,
+  Label
 } from '../components/ui/core';
 
 export default function TripPicker() {
@@ -333,32 +334,47 @@ function TripForm({
 
     <form
       onSubmit={onSubmit}
-      className="mt-4 grid gap-3 md:grid-cols-[1fr_120px_auto]"
+      className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2"
     >
 
-      <Input
-        value={name}
-        placeholder={fa ? 'اسم سفر' : 'Trip name'}
-        onChange={(e: { target: { value: SetStateAction<string>; }; }) => setName(e.target.value)}
-        required
-      />
+      <div>
+        <Label htmlFor="trip-name">
+          {fa ? 'اسم سفر' : 'Trip name'}
+        </Label>
+        <Input
+          id="trip-name"
+          value={name}
+          placeholder={fa ? 'مثلاً سفر شمال' : 'e.g. Summer trip'}
+          onChange={(e: { target: { value: SetStateAction<string>; }; }) => setName(e.target.value)}
+          required
+        />
+      </div>
 
-      <Input
-        value={currency}
-        placeholder={fa ? 'USD' : 'USD'}
-        maxLength={3}
-        onChange={(e: { target: { value: string; }; }) =>
-          setCurrency(e.target.value.toUpperCase())
-        }
-        required
-      />
+      <div>
+        <Label htmlFor="trip-currency">
+          {fa ? 'واحد پول' : 'Currency'}
+        </Label>
+        <Input
+          id="trip-currency"
+          value={currency}
+          placeholder="USD"
+          maxLength={3}
+          onChange={(e: { target: { value: string; }; }) =>
+            setCurrency(e.target.value.toUpperCase())
+          }
+          required
+        />
+      </div>
 
-      <Button
-        type="submit"
-        disabled={busy}
-      >
-        {label}
-      </Button>
+      <div className="sm:col-span-2">
+        <Button
+          type="submit"
+          disabled={busy}
+          className="w-full sm:w-auto"
+        >
+          {label}
+        </Button>
+      </div>
 
     </form>
 

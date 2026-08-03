@@ -9,6 +9,9 @@ import {
 
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { formatAmount, parseMoney } from '../utils/format';
+import { gregorianToJalali } from '../utils/jalaali';
+import JalaliDatePicker from '../components/JalaliDatePicker';
 
 import {
   Card,
@@ -23,6 +26,9 @@ import {
   Td,
   Button,
   Input,
+  Label,
+  Select,
+  Checkbox,
 } from '../components/ui/core';
 
 type Shares = Record<string, string>;
@@ -31,6 +37,9 @@ export default function Withdrawals() {
   const { isOwner } = useAuth();
   const { language } = usePreferences();
   const fa = language === 'fa';
+
+  const fmt = (v: number) =>
+    `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const queryClient = useQueryClient();
 
@@ -47,6 +56,7 @@ export default function Withdrawals() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [amount, setAmount] = useState('');
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0,10));
   const [selected, setSelected] = useState<string[]>([]);
   const [shares, setShares] = useState<Shares>({});
   const [editing, setEditing] = useState<Withdrawal | null>(null);
@@ -69,6 +79,7 @@ export default function Withdrawals() {
     setDescription('');
     setCategory('');
     setAmount('');
+    setDate(new Date().toISOString().slice(0,10));
     setSelected([]);
     setShares({});
     setEditing(null);
@@ -97,24 +108,32 @@ export default function Withdrawals() {
   });
 
   const toggle = (id: string) => {
-    setSelected((current) =>
-      current.includes(id)
+    setSelected((current) => {
+      const next = current.includes(id)
         ? current.filter((item) => item !== id)
-        : [...current, id]
-    );
+        : [...current, id];
+      setShares((s) => distribute(parseMoney(amount) || 0, next, s));
+      return next;
+    });
+  };
+
+  const amountChange = (val: string) => {
+    const formatted = formatAmount(val);
+    setAmount(formatted);
+    setShares((s) => distribute(parseMoney(formatted) || 0, selected, s));
   };
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    const total = Number(amount);
+    const total = parseMoney(amount) || 0;
 
     if (!total || !selected.length) {
       return;
     }
 
     const entered = selected.reduce(
-      (sum, id) => sum + (Number(shares[id]) || 0),
+      (sum, id) => sum + (parseMoney(shares[id]) || 0),
       0
     );
 
@@ -141,7 +160,7 @@ export default function Withdrawals() {
 
     const beneficiaries = selected.map((id) => {
       const share = shares[id]
-        ? Number(shares[id])
+        ? parseMoney(shares[id])
         : equal + remainder;
 
       remainder = 0;
@@ -157,6 +176,7 @@ export default function Withdrawals() {
       category,
       amount: total,
       beneficiaries,
+      date
     };
 
     if (editing) {
@@ -171,26 +191,50 @@ export default function Withdrawals() {
 
   const submitting = create.isPending || update.isPending;
 
+  const distribute = (
+    total: number,
+    sel: string[],
+    s: Shares
+  ) => {
+    const blank = sel.filter((id) => !s[id]);
+    if (!blank.length) return s;
+
+    const entered = sel.reduce(
+      (sum, id) => sum + (parseMoney(s[id]) || 0),
+      0
+    );
+
+    if (entered >= total) return s;
+
+    const each = Number(
+      ((total - entered) / blank.length).toFixed(2)
+    );
+
+    let remainder = Number(
+      (total - entered - each * blank.length).toFixed(2)
+    );
+
+    const next = { ...s };
+    blank.forEach((id) => {
+      next[id] = formatAmount(
+        String(each + (blank.indexOf(id) === 0 ? remainder : 0))
+      );
+    });
+    return next;
+  };
+
   const edit = (withdrawal: Withdrawal) => {
     setEditing(withdrawal);
     setDescription(withdrawal.description);
     setCategory(withdrawal.category);
-    setAmount(String(withdrawal.amount));
+    setAmount(formatAmount(String(withdrawal.amount)));
+    setDate(withdrawal.date ? withdrawal.date.slice(0,10) : withdrawal.created_at.slice(0,10));
 
-    setSelected(
-      withdrawal.beneficiaries.map(
-        (beneficiary) => beneficiary.member_id
-      )
+    const sel = withdrawal.beneficiaries.map(
+      (beneficiary) => beneficiary.member_id
     );
-
-    setShares(
-      Object.fromEntries(
-        withdrawal.beneficiaries.map((beneficiary) => [
-          beneficiary.member_id,
-          String(beneficiary.share),
-        ])
-      )
-    );
+    setSelected(sel);
+    setShares({});
   };
 
   const categories = [
@@ -249,13 +293,14 @@ export default function Withdrawals() {
               onSubmit={submit}
               className="space-y-5"
             >
-               <div className="form-grid grid gap-2 lg:grid-cols-3">
-                <div className="mt-2">
-                  <label className="form-label">
+               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <div>
+                  <Label htmlFor="withdrawal-description">
                     {fa ? 'توضیحات' : 'Description'}
-                  </label>
+                  </Label>
 
                   <Input
+                    id="withdrawal-description"
                     value={description}
                     onChange={(event: { target: { value: SetStateAction<string>; }; }) =>
                       setDescription(event.target.value)
@@ -264,15 +309,15 @@ export default function Withdrawals() {
                   />
                 </div>
 
-                <div className="mt-2">
-                  <label className="form-label">
+                <div>
+                  <Label htmlFor="withdrawal-category">
                     {fa ? 'دسته‌بندی' : 'Category'}
-                  </label>
+                  </Label>
 
-                  <select
-                    className="select-control"
+                  <Select
+                    id="withdrawal-category"
                     value={category}
-                    onChange={(event) =>
+                    onChange={(event: { target: { value: SetStateAction<string>; }; }) =>
                       setCategory(event.target.value)
                     }
                     required
@@ -291,53 +336,60 @@ export default function Withdrawals() {
                         {item.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
-                <div className="mt-2">
-                  <label className="form-label">
+                <div>
+                  <Label htmlFor="withdrawal-amount">
                     {fa ? 'مبلغ کل' : 'Total amount'}
-                  </label>
+                  </Label>
 
-                  <Input
-                    type="number"
-                    min=".01"
-                    step=".01"
+    <Input
+                    id="withdrawal-amount"
+                    type="text"
+                    inputMode="decimal"
                     value={amount}
                     onChange={(event: { target: { value: SetStateAction<string>; }; }) =>
-                      setAmount(event.target.value)
+                      amountChange(event.target.value as string)
                     }
                     required
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="withdrawal-date">
+                    {fa ? 'تاریخ' : 'Date'}
+                  </Label>
+                  <JalaliDatePicker id="withdrawal-date" value={date} onChange={(iso: string) => setDate(iso)} />
+                </div>
               </div>
 
               <div>
-                <div className="flex items-center justify-between">
-                  <label className="form-label mb-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label className="mb-0">
                     {fa ? 'افرادی که استفاده کردن' : 'Beneficiaries'}
-                  </label>
+                  </Label>
 
-                  <label className="flex gap-2 text-sm font-semibold text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={
-                        active.length > 0 &&
+                  <Checkbox
+                    checked={
+                      active.length > 0 &&
+                      selected.length === active.length
+                    }
+                    onChange={() => {
+                      const next =
                         selected.length === active.length
-                      }
-                      onChange={() =>
-                        setSelected(
-                          selected.length === active.length
-                            ? []
-                            : active.map((member) => member.id)
-                        )
-                      }
-                    />
-
+                          ? []
+                          : active.map((member) => member.id);
+                      setSelected(next);
+                      setShares((s) =>
+                        distribute(Number(amount) || 0, next, s)
+                      );
+                    }}
+                  >
                     {fa
                       ? 'همه اعضای فعال'
                       : 'All active members'}
-                  </label>
+                  </Checkbox>
                 </div>
 
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -346,39 +398,50 @@ export default function Withdrawals() {
                     : 'Leave a share blank to split the remainder equally.'}
                 </p>
 
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {active.map((member) => {
                     const on = selected.includes(member.id);
                     return (
                       <div
                         key={member.id}
-                        className="flex items-center gap-2 rounded-xl border border-border bg-card p-3"
+                        className={`flex items-center gap-3 rounded-xl border bg-card p-3 shadow-sm transition-colors ${
+                          on
+                            ? 'border-primary/40 ring-1 ring-primary/20'
+                            : 'border-border opacity-80'
+                        }`}
                       >
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={on}
                           onChange={() =>
                             toggle(member.id)
                           }
                         />
-                        <span className="flex-1 text-sm font-medium">
+                        <span className="flex-1 text-sm font-medium text-foreground">
                           {member.display_name || member.name}
                         </span>
 
                         <Input
-                          type="number"
-                          min="0"
-                          step=".01"
+                          type="text"
+                          inputMode="decimal"
                           disabled={!on}
                           value={shares[member.id] || ''}
-                          onChange={(event: { target: { value: any; }; }) =>
-                            setShares((current) => ({
-                              ...current,
-                              [member.id]:
-                                event.target.value,
-                            }))
-                          }
-                          className="h-9 w-24"
+                          onChange={(event: { target: { value: any; }; }) => {
+                            const val = formatAmount(String(event.target.value || ''));
+                            setShares((current) => {
+                              const next = { ...current };
+                              if (val) {
+                                next[member.id] = val;
+                              } else {
+                                delete next[member.id];
+                              }
+                              return distribute(
+                                parseMoney(amount) || 0,
+                                selected,
+                                next
+                              );
+                            });
+                          }}
+                          className="h-9 w-24 text-right"
                           placeholder={
                             fa ? 'سهم' : 'Share'
                           }
@@ -453,9 +516,7 @@ export default function Withdrawals() {
               {withdrawals?.data?.map((withdrawal) => (
                 <Tr key={withdrawal.id}>
                   <Td>
-                    {new Date(
-                      withdrawal.created_at
-                    ).toLocaleDateString()}
+                    {withdrawal.date ? gregorianToJalali(withdrawal.date) : gregorianToJalali(withdrawal.created_at)}
                   </Td>
 
                   <Td>
@@ -480,7 +541,7 @@ export default function Withdrawals() {
                   </Td>
 
                   <Td className="font-medium text-red-600">
-                    ${withdrawal.amount.toFixed(2)}
+                    {fmt(withdrawal.amount)}
                   </Td>
 
                   {isOwner && (

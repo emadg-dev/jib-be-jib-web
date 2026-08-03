@@ -8,6 +8,9 @@ import { useEffect } from 'react';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
+const fmt = (v: number) =>
+  `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 
 export default function Dashboard() {
   const { language } = usePreferences();
@@ -77,7 +80,7 @@ export default function Dashboard() {
 
           <CardContent>
           <div className="text-2xl font-bold text-foreground">
-            ${data.currentBankBalance.toFixed(2)}
+            {fmt(data.currentBankBalance)}
           </div>
           </CardContent>
         </Card>
@@ -93,7 +96,7 @@ export default function Dashboard() {
 
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ${data.totalDeposits.toFixed(2)}
+              {fmt(data.totalDeposits)}
             </div>
           </CardContent>
         </Card>
@@ -109,7 +112,7 @@ export default function Dashboard() {
 
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              ${data.totalWithdrawals.toFixed(2)}
+              {fmt(data.totalWithdrawals)}
             </div>
           </CardContent>
         </Card>
@@ -145,9 +148,9 @@ export default function Dashboard() {
             <Thead>
               <Tr>
                 <Th>{fa ? 'نام عضو' : 'Member Name'}</Th>
-                <Th className="text-right">{fa ? 'کل واریزی' : 'Total Deposited'}</Th>
-                <Th className="text-right">{fa ? 'کل هزینه‌ها' : 'Total Consumed'}</Th>
-                <Th className="text-right">{fa ? 'مانده حساب' : 'Net Balance'}</Th>
+                <Th>{fa ? 'کل واریزی' : 'Total Deposited'}</Th>
+                <Th>{fa ? 'کل هزینه‌ها' : 'Total Consumed'}</Th>
+                <Th>{fa ? 'مانده حساب' : 'Net Balance'}</Th>
               </Tr>
             </Thead>
 
@@ -156,22 +159,22 @@ export default function Dashboard() {
                 <Tr key={m.member_id}>
                   <Td className="font-medium text-gray-900">{m.display_name || m.name}</Td>
 
-                  <Td className="text-right text-green-600 font-semibold">
-                    ${m.total_deposited.toFixed(2)}
+                  <Td className="text-green-600 font-semibold">
+                    {fmt(m.total_deposited)}
                   </Td>
 
-                  <Td className="text-right text-red-600 font-semibold">
-                    ${m.total_expenses.toFixed(2)}
+                  <Td className="text-red-600 font-semibold">
+                    {fmt(m.total_expenses)}
                   </Td>
 
-                  <Td className={`text-right font-bold ${
+                  <Td className={`font-bold ${
                     m.balance > 0
                       ? 'text-indigo-600'
                       : m.balance < 0
                         ? 'text-amber-600'
                         : 'text-gray-600'
                   }`}>
-                    {m.balance < 0 ? '-' : '+'}${Math.abs(m.balance).toFixed(2)}
+                    {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
                   </Td>
 
                 </Tr>
@@ -200,7 +203,7 @@ export default function Dashboard() {
 
                 <Tooltip
                   formatter={(val: any) => [
-                    `$${Number(val).toFixed(2)}`,
+                    fmt(Number(val)),
                     fa ? 'مانده' : 'Balance'
                   ]}
                 />
@@ -246,7 +249,7 @@ export default function Dashboard() {
 
                 <Tooltip
                   formatter={(val:any)=>[
-                    `$${Number(val).toFixed(2)}`,
+                    fmt(Number(val)),
                     fa ? 'هزینه' : 'Spent'
                   ]}
                 />
@@ -316,7 +319,7 @@ export default function Dashboard() {
                   </div>
 
                   <span className="text-base font-bold text-indigo-700">
-                    ${s.amount.toFixed(2)}
+                    {fmt(s.amount)}
                   </span>
 
                 </div>

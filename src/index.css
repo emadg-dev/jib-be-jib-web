@@ -4,7 +4,7 @@
 
 @font-face {
   font-family: "Shabnam";
-  src: url("/fonts/Shabnam.woff2") format("woff2");
+  src: url("/fonts/Shabnam.tff") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -12,14 +12,14 @@
 
 @font-face {
   font-family: "Shabnam";
-  src: url("/fonts/Shabnam-Light.woff2") format("woff2");
+  src: url("/fonts/Shabnam-Light.ttf") format("truetype");
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Iranian Sans";
-  src: url("/fonts/Iranian%20Sans.ttf") format("truetype");
+  src: url("/fonts/Iranian-Sans.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -27,7 +27,7 @@
 
 @font-face {
   font-family: "Shabnam";
-  src: url("/fonts/Shabnam-Bold.woff2") format("woff2");
+  src: url("/fonts/Shabnam-Bold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -219,6 +219,16 @@
     text-sm
     font-semibold
     text-foreground;
+  
+  }
+
+
+  .form-grid {
+  
+    @apply
+    grid
+    grid-cols-1
+    gap-5;
   
   }
   

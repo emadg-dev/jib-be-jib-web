@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { membersApi } from '../api/services';
-import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td, Button, Input } from '../components/ui/core';
+import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td, Button, Input, Label, Select, Checkbox } from '../components/ui/core';
 import { useForm } from 'react-hook-form';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -133,29 +133,31 @@ export default function Members() {
 
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="form-grid items-end"
+            className="form-grid sm:grid-cols-2 xl:grid-cols-3"
           >
 
-            <div className="flex-1">
-
-              <label className="text-sm font-medium">
+            <div>
+              <Label htmlFor="member-name">
                 {fa ? 'نام' : 'Name'}
-              </label>
+              </Label>
 
-              <Input {...register('name', { required: true })} className="mt-1" placeholder={fa ? 'نام کاربری یکتا' : 'Unique login username'} />
+              <Input id="member-name" {...register('name', { required: true })} placeholder={fa ? 'نام کاربری یکتا' : 'Unique login username'} />
 
             </div>
 
+            <div>
+              <Label htmlFor="member-display">{fa ? 'نام نمایشی' : 'Display name'}</Label>
+              <Input id="member-display" {...register('display_name', { required: true })} />
+            </div>
 
-            <div className="flex-1"><label className="text-sm font-medium">{fa ? 'نام نمایشی' : 'Display name'}</label><Input {...register('display_name', { required: true })} className="mt-1" /></div>
-
-            <div className="flex-1">
-              <label className="text-sm font-medium">
+            <div>
+              <Label htmlFor="member-password">
                 {fa ? 'رمز عبور' : 'Password'}
-              </label>
+              </Label>
 
-              <div className="relative mt-1">
+              <div className="relative">
                 <Input
+                  id="member-password"
                   type={showPassword ? 'text' : 'password'}
                   {...register('password')}
                   className="pe-10"
@@ -169,25 +171,19 @@ export default function Members() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-700"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
-
-            <div className="flex-1">
-
-              <label className="text-sm font-medium">
+            <div>
+              <Label htmlFor="member-role">
                 {fa ? 'نقش' : 'Role'}
-              </label>
+              </Label>
 
-              <select
-                {...register('role')}
-                className="select-control"
-              >
-
+              <Select id="member-role" {...register('role')}>
                 <option value="member">
                   {fa ? 'عضو' : 'Member'}
                 </option>
@@ -195,25 +191,23 @@ export default function Members() {
                 <option value="owner">
                   {fa ? 'مدیر' : 'Owner'}
                 </option>
-
-              </select>
-
+              </Select>
             </div>
 
-            <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" {...register('active')} />{fa ? 'عضو فعال' : 'Active member'}</label>
+            <div className="flex items-end pb-1">
+              <Checkbox {...register('active')}>
+                {fa ? 'عضو فعال' : 'Active member'}
+              </Checkbox>
+            </div>
 
-            <div className="flex gap-2">
-
-              <Button type="submit" className="w-full xl:w-auto" loading={submitting}>
-
+            <div className="flex flex-wrap items-end gap-2 pb-1">
+              <Button type="submit" loading={submitting}>
                 {
                   editingMember
                     ? (fa ? 'ذخیره تغییرات' : 'Save changes')
                     : (fa ? 'افزودن عضو' : 'Add member')
                 }
-
               </Button>
-
 
               {
                 editingMember &&
@@ -225,9 +219,7 @@ export default function Members() {
                   {fa ? 'لغو' : 'Cancel'}
                 </Button>
               }
-
             </div>
-
 
           </form>
 
@@ -246,7 +238,6 @@ export default function Members() {
             <Thead>
 
               <Tr>
-
                 <Th>{fa ? 'نام نمایشی' : 'Display name'}</Th>
                 <Th>{fa ? 'نام کاربری' : 'Username'}</Th>
                 <Th>{fa ? 'نقش' : 'Role'}</Th>

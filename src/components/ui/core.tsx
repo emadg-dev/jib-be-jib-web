@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronDown } from 'lucide-react';
 
 export const Card = ({ children, className = '' }: any) => (
   <section
@@ -6,15 +7,7 @@ export const Card = ({ children, className = '' }: any) => (
       glass-panel
       overflow-hidden
       rounded-2xl
-      border
-      border-slate-200/70
-      bg-white/70
       shadow-sm
-      backdrop-blur-xl
-
-      dark:border-slate-700/60
-      dark:bg-slate-900/70
-
       ${className}
     `}
   >
@@ -34,8 +27,7 @@ export const CardTitle = ({ children, className = '' }: any) => (
       font-semibold
       leading-none
       tracking-tight
-      text-slate-900
-      dark:text-slate-100
+      text-foreground
       ${className}
     `}
   >
@@ -74,7 +66,7 @@ export const Button = ({
 
     focus-visible:outline-none
     focus-visible:ring-4
-    focus-visible:ring-indigo-300
+    focus-visible:ring-ring/40
 
     disabled:pointer-events-none
     disabled:opacity-50
@@ -85,33 +77,43 @@ export const Button = ({
   const variants = {
     primary:
       `
-      bg-indigo-600
-      text-white
-      hover:bg-indigo-700
+      bg-primary
+      text-primary-foreground
+      hover:bg-primary/90
       shadow-lg
       `,
 
     destructive:
       `
-      bg-rose-500
-      text-white
-      hover:bg-rose-600
+      bg-destructive
+      text-destructive-foreground
+      hover:bg-destructive/90
       shadow-lg
+      `,
+
+    secondary:
+      `
+      bg-secondary
+      text-secondary-foreground
+      hover:bg-secondary/80
       `,
 
     outline:
       `
       border
-      border-slate-300
-      bg-white/70
-      text-slate-700
+      border-input
+      bg-background
+      text-foreground
 
-      hover:bg-slate-100
+      hover:bg-accent/50
+      hover:text-accent-foreground
+      `,
 
-      dark:border-slate-700
-      dark:bg-slate-800
-      dark:text-slate-100
-      dark:hover:bg-slate-700
+    ghost:
+      `
+      text-foreground
+      hover:bg-accent/50
+      hover:text-accent-foreground
       `,
   };
 
@@ -145,34 +147,29 @@ export const Input = React.forwardRef<HTMLInputElement, any>(
         rounded-xl
 
         border
-        border-slate-300
+        border-input
 
-        bg-white/70
-        px-3
+        bg-background
+        px-3.5
         py-2
 
         text-sm
-        text-slate-900
+        text-foreground
 
-        placeholder:text-slate-400
+        placeholder:text-muted-foreground/70
 
         shadow-sm
         outline-none
         transition
 
-        focus:border-indigo-500
+        hover:border-ring/40
+
+        focus:border-ring
         focus:ring-4
-        focus:ring-indigo-200
+        focus:ring-ring/20
 
         disabled:cursor-not-allowed
         disabled:opacity-50
-
-        dark:border-slate-700
-        dark:bg-slate-800
-        dark:text-slate-100
-        dark:placeholder:text-slate-500
-        dark:focus:border-indigo-400
-        dark:focus:ring-indigo-900/40
 
         ${className}
       `}
@@ -183,9 +180,157 @@ export const Input = React.forwardRef<HTMLInputElement, any>(
 
 Input.displayName = 'Input';
 
-export const Table = ({ children }: any) => (
+export const Label = React.forwardRef<HTMLLabelElement, any>(
+  ({ className = '', children, ...props }, ref) => (
+    <label
+      ref={ref}
+      className={`
+        mb-1.5
+        block
+        text-sm
+        font-semibold
+        text-foreground
+
+        ${className}
+      `}
+      {...props}
+    >
+      {children}
+    </label>
+  )
+);
+
+Label.displayName = 'Label';
+
+export const Select = React.forwardRef<HTMLSelectElement, any>(
+  ({ className = '', children, ...props }, ref) => (
+    <div className="relative">
+      <select
+        ref={ref}
+        className={`
+          h-11
+          w-full
+          appearance-none
+          rounded-xl
+
+          border
+          border-input
+
+          bg-background
+          pe-10
+          ps-3.5
+
+          text-sm
+          text-foreground
+
+          shadow-sm
+          outline-none
+          transition
+
+          hover:border-ring/40
+
+          focus:border-ring
+          focus:ring-4
+          focus:ring-ring/20
+
+          disabled:cursor-not-allowed
+          disabled:opacity-50
+
+          ${className}
+        `}
+        {...props}
+      >
+        {children}
+      </select>
+
+      <ChevronDown
+        size={18}
+        className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+      />
+    </div>
+  )
+);
+
+Select.displayName = 'Select';
+
+export const Checkbox = React.forwardRef<HTMLInputElement, any>(
+  ({ className = '', children, ...props }, ref) => (
+    <label
+      className={`
+        group
+        inline-flex
+        cursor-pointer
+        select-none
+        items-center
+        gap-2.5
+
+        ${className}
+      `}
+    >
+      <span className="relative inline-flex h-5 w-5 shrink-0">
+        <input
+          ref={ref}
+          type="checkbox"
+          className={`
+            peer
+            h-5
+            w-5
+            appearance-none
+            rounded-md
+
+            border-2
+            border-slate-300
+
+            bg-background
+            transition-colors
+            duration-200
+
+            hover:border-primary/60
+
+            checked:border-primary
+            checked:bg-primary
+
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-ring/40
+            focus-visible:ring-offset-2
+            focus-visible:ring-offset-background
+
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+
+            dark:border-slate-600
+          `}
+          {...props}
+        />
+
+        <svg
+          className="pointer-events-none absolute inset-0 h-5 w-5 p-0.5 text-primary-foreground opacity-0 transition-opacity duration-200 peer-checked:opacity-100"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </span>
+
+      {children && (
+        <span className="text-sm font-medium text-foreground">
+          {children}
+        </span>
+      )}
+    </label>
+  )
+);
+
+Checkbox.displayName = 'Checkbox';
+
+export const Table = ({ children, className = '' }: any) => (
   <div className="-mx-5 overflow-x-auto sm:mx-0">
-    <table className="w-full min-w-[620px] caption-bottom text-sm">
+    <table className={`w-full table-auto caption-bottom text-sm ${className}`}>
       {children}
     </table>
   </div>
@@ -236,9 +381,10 @@ export const Th = ({ children, className = '' }: any) => (
   <th
     className={`
       h-11
-      px-4
-      text-left
+      px-3
+      text-center
       align-middle
+      whitespace-nowrap
 
       text-xs
       font-semibold
@@ -258,8 +404,11 @@ export const Th = ({ children, className = '' }: any) => (
 export const Td = ({ children, className = '' }: any) => (
   <td
     className={`
-      p-4
+      px-3
+      py-2
       align-middle
+      text-center
+      whitespace-nowrap
 
       text-slate-700
       dark:text-slate-200

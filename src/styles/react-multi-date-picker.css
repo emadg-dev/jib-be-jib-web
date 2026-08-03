@@ -1,0 +1,52 @@
+/* Minimal styles for react-multi-date-picker popup to match app visuals */
+.rmdp-container {
+  font-family: inherit;
+}
+.rmdp-input {
+  /* leave input invisible because we render our custom input; but ensure baseline styles */
+}
+.rmdp-picker {
+  background: var(--background, white);
+  color: var(--foreground, #0f172a);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px rgba(2,6,23,0.08);
+  padding: 0.5rem;
+  border: 1px solid rgba(15,23,42,0.06);
+  z-index: 9999;
+}
+.rmdp-calendar {
+  display: block;
+  min-width: 260px;
+}
+.rmdp-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 0.25rem 0.5rem 0.25rem;
+}
+.rmdp-days{
+  display:grid;
+  grid-template-columns:repeat(7, 1fr);
+  gap:0.25rem;
+}
+.rmdp-day {
+  height:2rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:0.5rem;
+}
+.rmdp-day:hover {
+  background: rgba(99,102,241,0.08);
+}
+.rmdp-day.rmdp-active{
+  background: var(--primary, #6366f1);
+  color: white;
+}
+.rmdp-arrow {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+/* RTL tweaks */
+.rmdp-picker[dir="rtl"] { direction: rtl; }

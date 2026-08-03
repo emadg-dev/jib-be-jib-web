@@ -1,8 +1,11 @@
 import { useState, type SetStateAction } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { depositsApi, membersApi, type Deposit } from '../api/services';
+import { gregorianToJalali } from '../utils/jalaali';
+import JalaliDatePicker from '../components/JalaliDatePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { formatAmount, parseMoney } from '../utils/format';
 import {
   Card,
   CardContent,
@@ -15,7 +18,9 @@ import {
   Th,
   Td,
   Button,
-  Input
+  Input,
+  Label,
+  Select
 } from '../components/ui/core';
 
 export default function Deposits() {
@@ -23,12 +28,16 @@ export default function Deposits() {
   const { language } = usePreferences();
   const fa = language === 'fa';
 
+  const fmt = (v: number) =>
+    `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
   const { isOwner } = useAuth();
   const queryClient = useQueryClient();
 
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [memberId, setMemberId] = useState('');
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0,10));
   const [editing, setEditing] = useState<Deposit | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -54,6 +63,7 @@ export default function Deposits() {
     setAmount('');
     setNote('');
     setMemberId('');
+    setDate(new Date().toISOString().slice(0,10));
     setEditing(null);
   };
 
@@ -87,8 +97,9 @@ export default function Deposits() {
 
     const data = {
       member_id: memberId,
-      amount: Number(amount),
-      note
+      amount: parseMoney(amount) || 0,
+      note,
+      date
     };
 
     if (!memberId || !data.amount)
@@ -143,22 +154,20 @@ export default function Deposits() {
 
           <form
             onSubmit={submit}
-            className="form-grid items-end"
+            className="form-grid sm:grid-cols-2 xl:grid-cols-3"
           >
 
             <div>
-
-              <label className="form-label">
+              <Label htmlFor="deposit-member">
                 {fa ? 'عضو' : 'Member'}
-              </label>
+              </Label>
 
-              <select
-                className="select-control"
+              <Select
+                id="deposit-member"
                 value={memberId}
-                onChange={e => setMemberId(e.target.value)}
+                onChange={(e: { target: { value: SetStateAction<string>; }; }) => setMemberId(e.target.value as string)}
                 required
               >
-
                 <option value="">
                   {fa ? 'انتخاب عضو' : 'Select member'}
                 </option>
@@ -172,56 +181,53 @@ export default function Deposits() {
                       </option>
                     )
                 }
-
-              </select>
-
+              </Select>
             </div>
 
-
             <div>
-
-              <label className="form-label">
+              <Label htmlFor="deposit-amount">
                 {fa ? 'مبلغ' : 'Amount'}
-              </label>
+              </Label>
 
               <Input
-                type="number"
-                min="0.01"
-                step="0.01"
+                id="deposit-amount"
+                type="text"
+                inputMode="decimal"
                 value={amount}
-                onChange={(e: { target: { value: SetStateAction<string>; }; }) => setAmount(e.target.value)}
+                onChange={(e: { target: { value: SetStateAction<string>; }; }) =>
+                  setAmount(formatAmount(e.target.value as string))
+                }
                 required
               />
-
             </div>
 
-
             <div>
-
-              <label className="form-label">
+              <Label htmlFor="deposit-note">
                 {fa ? 'توضیحات (اختیاری)' : 'Note (optional)'}
-              </label>
+              </Label>
 
               <Input
+                id="deposit-note"
                 value={note}
                 onChange={(e: { target: { value: SetStateAction<string>; }; }) => setNote(e.target.value)}
               />
-
             </div>
 
+            <div>
+              <Label htmlFor="deposit-date">
+                {fa ? 'تاریخ' : 'Date'}
+              </Label>
+              <JalaliDatePicker id="deposit-date" value={date} onChange={(iso: string) => setDate(iso)} />
+            </div>
 
-            <div className="flex gap-2">
-
+            <div className="flex flex-wrap items-end gap-2 pb-1">
               <Button type="submit" loading={submitting}>
-
                 {
                   editing
                     ? (fa ? 'ذخیره تغییرات' : 'Save changes')
                     : (fa ? 'ثبت واریزی' : 'Add deposit')
                 }
-
               </Button>
-
 
               {
                 editing &&
@@ -233,9 +239,7 @@ export default function Deposits() {
                   {fa ? 'لغو' : 'Cancel'}
                 </Button>
               }
-
             </div>
-
 
           </form>
 
@@ -279,7 +283,7 @@ export default function Deposits() {
                   <Tr key={d.id}>
 
                     <Td>
-                      {new Date(d.created_at).toLocaleDateString()}
+                      {d.date ? gregorianToJalali(d.date) : gregorianToJalali(d.created_at)}
                     </Td>
 
                     <Td>
@@ -291,7 +295,7 @@ export default function Deposits() {
                     </Td>
 
                     <Td className="font-medium text-green-600">
-                      ${d.amount.toFixed(2)}
+                      {fmt(d.amount)}
                     </Td>
 
 
@@ -306,8 +310,9 @@ export default function Deposits() {
                             onClick={() => {
                               setEditing(d);
                               setMemberId(d.member_id);
-                              setAmount(String(d.amount));
+                              setAmount(formatAmount(String(d.amount)));
                               setNote(d.note || '');
+                              setDate(d.date ? d.date.slice(0,10) : d.created_at.slice(0,10));
                             }}
                           >
                             {fa ? 'ویرایش' : 'Edit'}

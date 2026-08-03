@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { profileApi } from '../api/services';
-import { Card, CardContent, CardHeader, CardTitle, Button, Input } from '../components/ui/core';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input, Label } from '../components/ui/core';
 import { useForm } from 'react-hook-form';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -82,28 +82,28 @@ export default function Profile() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="text-sm font-medium text-slate-500">
+                <p className="text-sm font-medium text-muted-foreground">
                   {fa ? 'نام کاربری' : 'Username'}
-                </label>
-                <p className="mt-1 text-slate-900 dark:text-slate-100">
+                </p>
+                <p className="mt-1 text-foreground">
                   {displayProfile?.name || user?.name || '-'}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-500">
+                <p className="text-sm font-medium text-muted-foreground">
                   {fa ? 'نام نمایشی' : 'Display Name'}
-                </label>
-                <p className="mt-1 text-slate-900 dark:text-slate-100">
+                </p>
+                <p className="mt-1 text-foreground">
                   {displayProfile?.display_name || user?.display_name || '-'}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-500">
+                <p className="text-sm font-medium text-muted-foreground">
                   {fa ? 'نقش' : 'Role'}
-                </label>
-                <p className="mt-1 capitalize text-slate-900 dark:text-slate-100">
+                </p>
+                <p className="mt-1 capitalize text-foreground">
                   {displayProfile?.role || user?.role || '-'}
                 </p>
               </div>
@@ -119,7 +119,7 @@ export default function Profile() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {successMessage && (
                 <div className="rounded-xl bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-400">
                   {successMessage}
@@ -132,11 +132,12 @@ export default function Profile() {
               )}
 
               <div>
-                <label className="text-sm font-medium">
+                <Label htmlFor="current_password">
                   {fa ? 'رمز عبور فعلی' : 'Current Password'}
-                </label>
-                <div className="relative mt-1">
+                </Label>
+                <div className="relative">
                   <Input
+                    id="current_password"
                     type={showCurrentPassword ? 'text' : 'password'}
                     {...register('current_password', { required: true })}
                     className="pe-10"
@@ -144,24 +145,25 @@ export default function Profile() {
                   <button
                     type="button"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-700"
+                    className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
                   >
                     {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
                 {errors.current_password && (
-                  <p className="mt-1 text-xs text-rose-500">
+                  <p className="mt-1.5 text-xs font-medium text-rose-500">
                     {fa ? 'رمز عبور فعلی الزامی است' : 'Current password is required'}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="text-sm font-medium">
+                <Label htmlFor="new_password">
                   {fa ? 'رمز عبور جدید' : 'New Password'}
-                </label>
-                <div className="relative mt-1">
+                </Label>
+                <div className="relative">
                   <Input
+                    id="new_password"
                     type={showNewPassword ? 'text' : 'password'}
                     {...register('new_password', {
                       required: true,
@@ -172,32 +174,32 @@ export default function Profile() {
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-700"
+                    className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
                   >
                     {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
                 {errors.new_password && (
-                  <p className="mt-1 text-xs text-rose-500">
+                  <p className="mt-1.5 text-xs font-medium text-rose-500">
                     {errors.new_password.message || (fa ? 'حداقل ۶ کاراکتر' : 'At least 6 characters')}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="text-sm font-medium">
+                <Label htmlFor="confirm_password">
                   {fa ? 'تأیید رمز عبور جدید' : 'Confirm New Password'}
-                </label>
+                </Label>
                 <Input
+                  id="confirm_password"
                   type="password"
                   {...register('confirm_password', {
                     required: true,
                     minLength: { value: 6, message: fa ? 'حداقل ۶ کاراکتر' : 'At least 6 characters' },
                   })}
-                  className="mt-1"
                 />
                 {errors.confirm_password && (
-                  <p className="mt-1 text-xs text-rose-500">
+                  <p className="mt-1.5 text-xs font-medium text-rose-500">
                     {errors.confirm_password.message || (fa ? 'حداقل ۶ کاراکتر' : 'At least 6 characters')}
                   </p>
                 )}
