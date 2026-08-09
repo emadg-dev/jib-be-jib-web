@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { PreferencesProvider } from './contexts/PreferencesContext';
 import { ConfirmProvider } from './components/ConfirmDialog';
+import LoadingScreen from './components/LoadingScreen';
 import AppLayout from './layouts/AppLayout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -27,7 +28,7 @@ function TripDataReset() {
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div className="grid min-h-screen place-items-center text-slate-500">Loading...</div>;
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   return children;
 };
