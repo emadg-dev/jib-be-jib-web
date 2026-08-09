@@ -71,7 +71,7 @@ export default function Login() {
           <img
             src="/jbj_header.webp"
             alt="Jib-be-Jib logo"
-            className="rounded-3xl object-contain"
+            className="rounded-3xl object-contain px-16"
           />
         </div>
         <CardHeader className="pt-2">
