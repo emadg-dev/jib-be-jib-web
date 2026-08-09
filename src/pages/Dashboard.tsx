@@ -221,7 +221,7 @@ export default function Dashboard() {
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">
-              {fa ? 'مانده حساب اعضا' : 'Member Net Balances'}
+              {fa ? 'هزینه خالص اعضا' : 'Member Net Expenses'}
             </CardTitle>
           </CardHeader>
 
@@ -235,11 +235,11 @@ export default function Dashboard() {
                 <Tooltip
                   formatter={(val: any) => [
                     fmt(Number(val)),
-                    fa ? 'مانده' : 'Balance'
+                    fa ? 'هزینه خالص' : 'Net Expenses'
                   ]}
                 />
 
-                <Bar dataKey="balance" fill="#4f46e5" radius={[4,4,0,0]} />
+                <Bar dataKey="total_expenses" fill="#ef4444" radius={[4,4,0,0]} />
               </BarChart>
             </ResponsiveContainer>
             </div>
