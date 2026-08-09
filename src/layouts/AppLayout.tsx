@@ -31,16 +31,20 @@ export default function AppLayout() {
           pathname={location.pathname}
         />
         <UserMenu name={user?.name} {...controls} />
+        <div className="px-4 py-4 text-center text-xs text-muted-foreground/60">
+          Made with <span className="inline-block text-red-500 animate-pulse">♥</span> by Emzi and MiMo
+        </div>
       </aside>
       <div className="min-w-0 flex-1 lg:ml-72 rtl:lg:mr-72 rtl:lg:ml-0">
-        <header className="glass-panel sticky top-0 z-20 border-x-0 border-t-0 rounded-none px-4 py-3 sm:px-6 lg:hidden">
-          <div className="flex items-center justify-between gap-3">
+        <header className="fixed top-0 left-0 right-0 z-20 flex items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:hidden">
+          <div className="glass-panel rounded-2xl px-5 py-2">
             <Brand compact />
+          </div>
+          <div className="glass-panel rounded-2xl px-2 py-1.5">
             <HeaderControls {...controls} />
           </div>
-          {/* <TripSwitcher trips={trips} selectedTrip={selectedTrip} onSelect={selectTrip} compact /> */}
         </header>
-        <main className="mx-auto w-full max-w-7xl p-4 pb-28 sm:p-6 sm:pb-28 lg:p-8 lg:pb-8">
+        <main className="mx-auto w-full max-w-7xl p-4 pt-20 pb-28 sm:px-6 sm:pt-20 sm:pb-28 lg:p-8 lg:pb-8 lg:pt-8">
           {permissionNotice && (
             <div role="alert" className="mb-4 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
               Owner permission required
@@ -48,6 +52,9 @@ export default function AppLayout() {
             </div>
           )}
           <Outlet />
+          <footer className="mt-12 pb-4 text-center text-xs text-muted-foreground/60">
+            Made with <span className="inline-block text-red-500 animate-pulse">♥</span> by Emzi and MiMo
+          </footer>
         </main>
       </div>
       <BottomDock nav={filteredNav} pathname={location.pathname} />
@@ -92,7 +99,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
     <div className={compact ? 'flex items-center gap-2 text-lg font-bold text-slate-900' : 'flex items-center gap-3 px-7 py-8 text-xl font-bold text-slate-900'}>
       <span className="grid pt-1 place-items-center">
         <img
-          src={theme === 'light' ? "/jbj_icon.png" : "/jbj_icon_dark.png"}
+          src={theme === 'light' ? "/jbj_header.webp" : "/jbj_header.webp"}
           alt="Jib-be-Jib logo"
           className="object-contain h-10"
         />

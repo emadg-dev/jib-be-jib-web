@@ -10,7 +10,7 @@ export default function LoadingScreen() {
         <div className="loading-orbit__ring loading-orbit__ring--cw" />
         <div className="loading-orbit__ring loading-orbit__ring--ccw" />
         <img
-          src={isDark ? '/jbj_icon_dark.png' : '/jbj_icon.png'}
+          src={isDark ? '/jbj_icon.webp' : '/jbj_icon.webp'}
           alt="Jib-be-Jib"
           className="loading-logo"
           draggable={false}

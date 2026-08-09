@@ -69,7 +69,7 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <div className="my-4 flex justify-center">
           <img
-            src="/jbj_header.png"
+            src="/jbj_header.webp"
             alt="Jib-be-Jib logo"
             className="rounded-3xl object-contain"
           />
