@@ -3,10 +3,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, LogOut, Languages, Moon, Sun, Map, User } from 'lucide-react';
-import { Select } from '../components/ui/core';
 
 export default function AppLayout() {
-  const { user, logout, trips, selectedTrip, selectTrip } = useAuth();
+  const { user, logout } = useAuth();
   const [permissionNotice, setPermissionNotice] = useState(false);
   const { language, theme, toggleLanguage, toggleTheme } = usePreferences();
   const location = useLocation();
@@ -39,7 +38,7 @@ export default function AppLayout() {
             <Brand compact />
             <HeaderControls {...controls} />
           </div>
-          <TripSwitcher trips={trips} selectedTrip={selectedTrip} onSelect={selectTrip} compact />
+          {/* <TripSwitcher trips={trips} selectedTrip={selectedTrip} onSelect={selectTrip} compact /> */}
         </header>
         <main className="mx-auto w-full max-w-7xl p-4 pb-28 sm:p-6 sm:pb-28 lg:p-8 lg:pb-8">
           {permissionNotice && (
@@ -99,20 +98,6 @@ function Brand({ compact = false }: { compact?: boolean }) {
         />
       </span>
       {/* <span>{fa ? 'جیب‌به‌جیب' : 'Jib-be-Jib'}</span> */}
-    </div>
-  );
-}
-
-function TripSwitcher({ trips, selectedTrip, onSelect, compact = false }: any) {
-  return (
-    <div className={compact ? 'mt-3' : 'px-4 pb-3'}>
-      <label className="sr-only" htmlFor="trip-switcher">Current trip</label>
-      <Select id="trip-switcher" value={selectedTrip?.id || ''} onChange={(event: { target: { value: any; }; }) => onSelect(event.target.value)}>
-        <option value="" disabled>Select a trip</option>
-        {trips.filter((trip: any) => trip.active !== false).map((trip: any) => (
-          <option key={trip.id} value={trip.id}>{trip.name} ({trip.currency})</option>
-        ))}
-      </Select>
     </div>
   );
 }

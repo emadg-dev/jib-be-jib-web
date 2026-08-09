@@ -14,6 +14,7 @@ import { useConfirm } from '../components/ConfirmDialog';
 import { formatAmount, parseMoney } from '../utils/format';
 import { gregorianToJalali } from '../utils/jalaali';
 import JalaliDatePicker from '../components/JalaliDatePicker';
+import { PageSkeleton } from '../components/Skeleton';
 
 import {
   Card,
@@ -36,7 +37,7 @@ import {
 type Shares = Record<string, string>;
 
 export default function Withdrawals() {
-  const { isOwner } = useAuth();
+  const { isOwner, user } = useAuth();
   const { language } = usePreferences();
   const fa = language === 'fa';
   const confirm = useConfirm();
@@ -46,7 +47,7 @@ export default function Withdrawals() {
 
   const queryClient = useQueryClient();
 
-  const { data: withdrawals } = useQuery({
+  const { data: withdrawals, isLoading: isLoadingWithdrawals } = useQuery({
     queryKey: ['withdrawals'],
     queryFn: withdrawalsApi.getAll,
   });
@@ -279,6 +280,8 @@ export default function Withdrawals() {
       label: fa ? 'سایر' : 'Other',
     },
   ];
+
+  if (isLoadingWithdrawals) return <div dir={fa ? 'rtl' : 'ltr'}><PageSkeleton /></div>;
 
   return (
     <div dir={fa ? 'rtl' : 'ltr'} className="space-y-6">
@@ -548,13 +551,15 @@ export default function Withdrawals() {
                 </Tr>
               </Thead>
               <Tbody>
-                {withdrawals?.data?.map((w) => (
-                  <Tr key={w.id}>
-                    <Td>{w.date ? gregorianToJalali(w.date) : gregorianToJalali(w.created_at)}</Td>
-                    <Td>{w.description}</Td>
-                    <Td>{categories.find((c) => c.value === w.category)?.label || w.category}</Td>
-                    <Td>{w.beneficiaries.map((b) => b.member_display_name || b.member_name).join(', ')}</Td>
-                    <Td className="font-medium text-red-600">{fmt(w.amount)}</Td>
+                {withdrawals?.data?.map((w) => {
+                  const isBeneficiary = w.beneficiaries.some(b => b.member_id === user?.id);
+                  return (
+                    <Tr key={w.id} className={isBeneficiary ? 'bg-primary/5 border-l-4 border-l-primary' : ''}>
+                      <Td>{w.date ? gregorianToJalali(w.date) : gregorianToJalali(w.created_at)}</Td>
+                      <Td>{w.description}</Td>
+                      <Td>{categories.find((c) => c.value === w.category)?.label || w.category}</Td>
+                      <Td>{w.beneficiaries.map((b) => b.member_display_name || b.member_name).join(', ')}</Td>
+                      <Td className="font-medium text-red-600">{fmt(w.amount)}</Td>
                     {isOwner && (
                       <Td>
                         <div className="flex gap-2">
@@ -576,54 +581,58 @@ export default function Withdrawals() {
                       </Td>
                     )}
                   </Tr>
-                ))}
+                  );
+                })}
               </Tbody>
             </Table>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {withdrawals?.data?.map((w) => (
-                <div key={w.id} className="rounded-xl border border-border bg-card/60 p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-foreground">{w.description}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {w.date ? gregorianToJalali(w.date) : gregorianToJalali(w.created_at)}
-                        {' · '}
-                        {categories.find((c) => c.value === w.category)?.label || w.category}
-                      </p>
+              {withdrawals?.data?.map((w) => {
+                const isBeneficiary = w.beneficiaries.some(b => b.member_id === user?.id);
+                return (
+                  <div key={w.id} className={`rounded-xl border bg-card/60 p-4 shadow-sm ${isBeneficiary ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-foreground">{w.description}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {w.date ? gregorianToJalali(w.date) : gregorianToJalali(w.created_at)}
+                          {' · '}
+                          {categories.find((c) => c.value === w.category)?.label || w.category}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-sm font-bold text-red-600">{fmt(w.amount)}</span>
                     </div>
-                    <span className="shrink-0 text-sm font-bold text-red-600">{fmt(w.amount)}</span>
+                    {w.beneficiaries.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {w.beneficiaries.map((b) => (
+                          <span key={b.member_id} className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${b.member_id === user?.id ? 'bg-primary/20 text-primary font-medium' : 'bg-muted text-muted-foreground'}`}>
+                            {b.member_display_name || b.member_name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {isOwner && (
+                      <div className="mt-3 flex gap-2 border-t border-border pt-3">
+                         <Button variant="outline" size="sm" onClick={() => { edit(w); setShowForm(true); }}>{fa ? 'ویرایش' : 'Edit'}</Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          loading={deletingId === w.id}
+                          disabled={deletingId === w.id}
+                          onClick={async () => {
+                            if (deletingId) return;
+                            if (!await confirm(
+                              fa ? 'حذف خرج' : 'Delete expense',
+                              fa ? 'از حذف این خرج مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this expense? This action cannot be undone.'
+                            )) return;
+                            try { setDeletingId(w.id); await remove.mutateAsync(w.id); } finally { setDeletingId(null); }
+                          }}
+                        >{fa ? 'حذف' : 'Delete'}</Button>
+                      </div>
+                    )}
                   </div>
-                  {w.beneficiaries.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {w.beneficiaries.map((b) => (
-                        <span key={b.member_id} className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                          {b.member_display_name || b.member_name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {isOwner && (
-                    <div className="mt-3 flex gap-2 border-t border-border pt-3">
-                       <Button variant="outline" size="sm" onClick={() => { edit(w); setShowForm(true); }}>{fa ? 'ویرایش' : 'Edit'}</Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        loading={deletingId === w.id}
-                        disabled={deletingId === w.id}
-                        onClick={async () => {
-                          if (deletingId) return;
-                          if (!await confirm(
-                            fa ? 'حذف خرج' : 'Delete expense',
-                            fa ? 'از حذف این خرج مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this expense? This action cannot be undone.'
-                          )) return;
-                          try { setDeletingId(w.id); await remove.mutateAsync(w.id); } finally { setDeletingId(null); }
-                        }}
-                      >{fa ? 'حذف' : 'Delete'}</Button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

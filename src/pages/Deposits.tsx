@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useConfirm } from '../components/ConfirmDialog';
 import { formatAmount, parseMoney } from '../utils/format';
+import { PageSkeleton } from '../components/Skeleton';
 import {
   Card,
   CardContent,
@@ -30,6 +31,7 @@ export default function Deposits() {
   const { language } = usePreferences();
   const fa = language === 'fa';
   const confirm = useConfirm();
+  const { user } = useAuth();
 
   const fmt = (v: number) =>
     `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -49,7 +51,7 @@ export default function Deposits() {
   const [showForm, setShowForm] = useState(false);
 
 
-  const { data: deposits } = useQuery({
+  const { data: deposits, isLoading: isLoadingDeposits } = useQuery({
     queryKey: ['deposits'],
     queryFn: depositsApi.getAll
   });
@@ -120,6 +122,8 @@ export default function Deposits() {
 
   const submitting = create.isPending || update.isPending;
 
+
+  if (isLoadingDeposits) return <div dir={fa ? 'rtl' : 'ltr'}><PageSkeleton /></div>;
 
   return (
     <div dir={fa ? 'rtl' : 'ltr'} className="space-y-6">
@@ -296,12 +300,14 @@ export default function Deposits() {
                 </Tr>
               </Thead>
               <Tbody>
-                {deposits?.data?.map(d => (
-                  <Tr key={d.id}>
-                    <Td>{d.date ? gregorianToJalali(d.date) : gregorianToJalali(d.created_at)}</Td>
-                    <Td>{d.member_display_name || d.member_name}</Td>
-                    <Td>{d.note || '-'}</Td>
-                    <Td className="font-medium text-green-600">{fmt(d.amount)}</Td>
+                {deposits?.data?.map(d => {
+                  const isCurrentUser = user?.id === d.member_id;
+                  return (
+                    <Tr key={d.id} className={isCurrentUser ? 'bg-primary/5 border-l-4 border-l-primary' : ''}>
+                      <Td>{d.date ? gregorianToJalali(d.date) : gregorianToJalali(d.created_at)}</Td>
+                      <Td>{d.member_display_name || d.member_name}</Td>
+                      <Td>{d.note || '-'}</Td>
+                      <Td className="font-medium text-green-600">{fmt(d.amount)}</Td>
                     {isOwner && (
                       <Td>
                         <div className="flex gap-2">
@@ -324,44 +330,48 @@ export default function Deposits() {
                       </Td>
                     )}
                   </Tr>
-                ))}
+                  );
+                })}
               </Tbody>
             </Table>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {deposits?.data?.map(d => (
-                <div key={d.id} className="rounded-xl border border-border bg-card/60 p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-foreground">{d.member_display_name || d.member_name}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {d.date ? gregorianToJalali(d.date) : gregorianToJalali(d.created_at)}
-                        {d.note && <>{' · '}{d.note}</>}
-                      </p>
+              {deposits?.data?.map(d => {
+                const isCurrentUser = user?.id === d.member_id;
+                return (
+                  <div key={d.id} className={`rounded-xl border bg-card/60 p-4 shadow-sm ${isCurrentUser ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-foreground">{d.member_display_name || d.member_name}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {d.date ? gregorianToJalali(d.date) : gregorianToJalali(d.created_at)}
+                          {d.note && <>{' · '}{d.note}</>}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-sm font-bold text-green-600">{fmt(d.amount)}</span>
                     </div>
-                    <span className="shrink-0 text-sm font-bold text-green-600">{fmt(d.amount)}</span>
+                    {isOwner && (
+                      <div className="mt-3 flex gap-2 border-t border-border pt-3">
+                        <Button variant="outline" size="sm" onClick={() => {
+                          setEditing(d); setMemberId(d.member_id); setAmount(formatAmount(String(d.amount)));
+                          setNote(d.note || ''); setDate(d.date ? d.date.slice(0,10) : d.created_at.slice(0,10));
+                          setShowForm(true);
+                        }}>{fa ? 'ویرایش' : 'Edit'}</Button>
+                        <Button variant="destructive" size="sm" loading={deletingId === d.id} disabled={deletingId === d.id}
+                          onClick={async () => {
+                            if (deletingId) return;
+                            if (!await confirm(
+                              fa ? 'حذف واریزی' : 'Delete deposit',
+                              fa ? 'از حذف این واریزی مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this deposit? This action cannot be undone.'
+                            )) return;
+                            try { setDeletingId(d.id); await remove.mutateAsync(d.id); } finally { setDeletingId(null); }
+                          }}
+                        >{fa ? 'حذف' : 'Delete'}</Button>
+                      </div>
+                    )}
                   </div>
-                  {isOwner && (
-                    <div className="mt-3 flex gap-2 border-t border-border pt-3">
-                      <Button variant="outline" size="sm" onClick={() => {
-                        setEditing(d); setMemberId(d.member_id); setAmount(formatAmount(String(d.amount)));
-                        setNote(d.note || ''); setDate(d.date ? d.date.slice(0,10) : d.created_at.slice(0,10));
-                        setShowForm(true);
-                      }}>{fa ? 'ویرایش' : 'Edit'}</Button>
-                      <Button variant="destructive" size="sm" loading={deletingId === d.id} disabled={deletingId === d.id}
-                        onClick={async () => {
-                          if (deletingId) return;
-                          if (!await confirm(
-                            fa ? 'حذف واریزی' : 'Delete deposit',
-                            fa ? 'از حذف این واریزی مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this deposit? This action cannot be undone.'
-                          )) return;
-                          try { setDeletingId(d.id); await remove.mutateAsync(d.id); } finally { setDeletingId(null); }
-                        }}
-                      >{fa ? 'حذف' : 'Delete'}</Button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

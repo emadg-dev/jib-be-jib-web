@@ -5,6 +5,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import { ArrowRight, Wallet, TrendingUp, TrendingDown, Users, DollarSign, LayoutGrid, List } from 'lucide-react';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { DashboardSkeleton } from '../components/Skeleton';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -23,6 +25,7 @@ const fmt = (v: number) =>
 export default function Dashboard() {
   const { language } = usePreferences();
   const fa = language === 'fa';
+  const { user } = useAuth();
   const [memberView, setMemberView] = useState<'card' | 'table'>(() =>
     typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
   );
@@ -46,12 +49,7 @@ export default function Dashboard() {
     queryFn: dashboardApi.get
   });
 
-  if (isLoading)
-    return (
-      <div className="p-8 text-center text-gray-500">
-        {fa ? 'در حال آماده کردن اطلاعات...' : 'Loading dashboard overview...'}
-      </div>
-    );
+  if (isLoading) return <DashboardSkeleton />;
 
   if (error)
     return (
@@ -186,38 +184,44 @@ export default function Dashboard() {
                 </Tr>
               </Thead>
               <Tbody>
-                {data.members.map((m) => (
-                  <Tr key={m.member_id}>
-                    <Td className="font-medium text-gray-900">{m.display_name || m.name}</Td>
-                    <Td className="text-green-600 font-semibold">{fmt(m.total_deposited)}</Td>
-                    <Td className="text-red-600 font-semibold">{fmt(m.total_expenses)}</Td>
-                    <Td className={`font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
-                      {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
-                    </Td>
-                  </Tr>
-                ))}
+                {data.members.map((m) => {
+                  const isCurrentUser = user?.id === m.member_id;
+                  return (
+                    <Tr key={m.member_id} className={isCurrentUser ? 'bg-primary/5 border-l-4 border-l-primary' : ''}>
+                      <Td className="font-medium text-gray-900">{m.display_name || m.name}</Td>
+                      <Td className="text-green-600 font-semibold">{fmt(m.total_deposited)}</Td>
+                      <Td className="text-red-600 font-semibold">{fmt(m.total_expenses)}</Td>
+                      <Td className={`font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
+                        {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
+                      </Td>
+                    </Tr>
+                  );
+                })}
               </Tbody>
             </Table>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {data.members.map((m) => (
-                <div key={m.member_id} className="rounded-xl border border-border bg-card/60 p-4 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <p className="truncate font-semibold text-foreground">{m.display_name || m.name}</p>
-                    <span className={`text-sm font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
-                      {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
-                    </span>
+              {data.members.map((m) => {
+                const isCurrentUser = user?.id === m.member_id;
+                return (
+                  <div key={m.member_id} className={`rounded-xl border bg-card/60 p-4 shadow-sm ${isCurrentUser ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}>
+                    <div className="flex items-center justify-between">
+                      <p className="truncate font-semibold text-foreground">{m.display_name || m.name}</p>
+                      <span className={`text-sm font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
+                        {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
+                      <span className="text-green-600">
+                        {fa ? 'واریزی:' : 'Deposited:'} {fmt(m.total_deposited)}
+                      </span>
+                      <span className="text-red-600">
+                        {fa ? 'هزینه:' : 'Spent:'} {fmt(m.total_expenses)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
-                    <span className="text-green-600">
-                      {fa ? 'واریزی:' : 'Deposited:'} {fmt(m.total_deposited)}
-                    </span>
-                    <span className="text-red-600">
-                      {fa ? 'هزینه:' : 'Spent:'} {fmt(m.total_expenses)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -263,7 +267,7 @@ export default function Dashboard() {
           </CardHeader>
 
           <CardContent className="h-[300px]">
-  <div dir="ltr" className="w-full h-full">
+  <div dir="ltr" className="w-full h-full min-h-[250px]">
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
 
@@ -273,7 +277,8 @@ export default function Dashboard() {
                   nameKey="category"
                   cx="50%"
                   cy="50%"
-                  outerRadius={90}
+                  outerRadius="80%"
+                  innerRadius="40%"
                   label={({name, percent}) =>
                     `${fa ? (CATEGORY_FA[name] || name) : name} ${(percent * 100).toFixed(0)}%`
                   }
@@ -282,6 +287,8 @@ export default function Dashboard() {
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
+                      stroke="hsl(var(--background))"
+                      strokeWidth={2}
                     />
                   ))}
                 </Pie>
