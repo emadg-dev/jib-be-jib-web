@@ -153,7 +153,7 @@ export const Input = React.forwardRef<HTMLInputElement, any>(
         px-3.5
         py-2
 
-        text-sm
+        text-base
         text-foreground
 
         placeholder:text-muted-foreground/70
@@ -220,7 +220,7 @@ export const Select = React.forwardRef<HTMLSelectElement, any>(
           pe-10
           ps-3.5
 
-          text-sm
+          text-base
           text-foreground
 
           shadow-sm
