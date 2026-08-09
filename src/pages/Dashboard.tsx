@@ -8,6 +8,14 @@ import { useEffect, useState } from 'react';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
+const CATEGORY_FA: Record<string, string> = {
+  Food: 'غذا',
+  Accommodation: 'اقامت',
+  Transport: 'حمل‌ونقل',
+  Activities: 'تفریحات',
+  Other: 'سایر',
+};
+
 const fmt = (v: number) =>
   `${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -267,7 +275,7 @@ export default function Dashboard() {
                   cy="50%"
                   outerRadius={90}
                   label={({name, percent}) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
+                    `${fa ? (CATEGORY_FA[name] || name) : name} ${(percent * 100).toFixed(0)}%`
                   }
                 >
                   {data.categories.map((_, index) => (
@@ -324,38 +332,64 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-              {data.settlements.map((s,i)=>(
+              {data.settlements.map((s,i)=>{
 
+                const bgColors = [
+                  'bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-200/60',
+                  'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200/60',
+                  'bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200/60',
+                  'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200/60',
+                  'bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200/60',
+                  'bg-gradient-to-br from-cyan-50 to-sky-50 border-cyan-200/60',
+                ];
+                const textColors = [
+                  'text-indigo-700',
+                  'text-emerald-700',
+                  'text-violet-700',
+                  'text-amber-700',
+                  'text-rose-700',
+                  'text-cyan-700',
+                ];
+                const arrowColors = [
+                  'text-indigo-500',
+                  'text-emerald-500',
+                  'text-violet-500',
+                  'text-amber-500',
+                  'text-rose-500',
+                  'text-cyan-500',
+                ];
+
+                return (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-4 rounded-lg bg-indigo-50/40 border border-indigo-100 shadow-sm"
+                  className={`flex items-center justify-between p-4 rounded-xl border shadow-sm ${bgColors[i % bgColors.length]}`}
                 >
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
 
-                    <span className="font-semibold text-gray-900">
+                    <span className="font-semibold text-gray-900 truncate">
                       {s.fromName}
                     </span>
 
                     <ArrowRight
-                      className={`w-4 h-4 text-indigo-600 ${
+                      className={`w-4 h-4 shrink-0 ${arrowColors[i % arrowColors.length]} ${
                         fa ? 'rotate-180' : ''
                       }`}
                     />
 
-                    <span className="font-semibold text-gray-900">
+                    <span className="font-semibold text-gray-900 truncate">
                       {s.toName}
                     </span>
 
                   </div>
 
-                  <span className="text-base font-bold text-indigo-700">
+                  <span className={`text-base font-bold shrink-0 ms-3 ${textColors[i % textColors.length]}`}>
                     {fmt(s.amount)}
                   </span>
 
                 </div>
-
-              ))}
+                );
+              })}
 
             </div>
 

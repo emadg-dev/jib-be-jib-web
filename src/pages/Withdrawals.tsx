@@ -595,9 +595,13 @@ export default function Withdrawals() {
                     <span className="shrink-0 text-sm font-bold text-red-600">{fmt(w.amount)}</span>
                   </div>
                   {w.beneficiaries.length > 0 && (
-                    <p className="mt-2 truncate text-xs text-muted-foreground">
-                      {w.beneficiaries.map((b) => b.member_display_name || b.member_name).join(', ')}
-                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {w.beneficiaries.map((b) => (
+                        <span key={b.member_id} className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          {b.member_display_name || b.member_name}
+                        </span>
+                      ))}
+                    </div>
                   )}
                   {isOwner && (
                     <div className="mt-3 flex gap-2 border-t border-border pt-3">
