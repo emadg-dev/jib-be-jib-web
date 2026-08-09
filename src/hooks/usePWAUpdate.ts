@@ -7,20 +7,15 @@ const updateSW = registerSW({
   onNeedRefresh() {
     window.dispatchEvent(new Event('pwa-update-available'));
   },
-  onOfflineReady() {
-    window.dispatchEvent(new Event('pwa-offline-ready'));
-  },
 });
 
 skipWaiting = () => updateSW();
 
 export function usePWAUpdate() {
   const [needRefresh, setNeedRefresh] = useState(false);
-  const [offlineReady, setOfflineReady] = useState(false);
 
   const close = useCallback(() => {
     setNeedRefresh(false);
-    setOfflineReady(false);
   }, []);
 
   const update = useCallback(async () => {
@@ -31,16 +26,9 @@ export function usePWAUpdate() {
 
   useEffect(() => {
     const onRefresh = () => setNeedRefresh(true);
-    const onOffline = () => setOfflineReady(true);
-
     window.addEventListener('pwa-update-available', onRefresh);
-    window.addEventListener('pwa-offline-ready', onOffline);
-
-    return () => {
-      window.removeEventListener('pwa-update-available', onRefresh);
-      window.removeEventListener('pwa-offline-ready', onOffline);
-    };
+    return () => window.removeEventListener('pwa-update-available', onRefresh);
   }, []);
 
-  return { needRefresh, offlineReady, update, close };
+  return { needRefresh, update, close };
 }

@@ -6,6 +6,7 @@ import { PreferencesProvider } from './contexts/PreferencesContext';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import LoadingScreen from './components/LoadingScreen';
 import UpdatePrompt from './components/UpdatePrompt';
+import AddToHomeScreen from './components/AddToHomeScreen';
 import AppLayout from './layouts/AppLayout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -81,6 +82,7 @@ export default function App() {
       <PreferencesProvider>
         <ConfirmProvider>
           <UpdatePrompt />
+          <AddToHomeScreen />
           <AuthProvider>
             <BrowserRouter>
               <AppRoutes />
