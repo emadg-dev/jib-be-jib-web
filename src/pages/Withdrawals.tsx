@@ -9,6 +9,7 @@ import {
 
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { useConfirm } from '../components/ConfirmDialog';
 import { formatAmount, parseMoney } from '../utils/format';
 import { gregorianToJalali } from '../utils/jalaali';
 import JalaliDatePicker from '../components/JalaliDatePicker';
@@ -37,6 +38,7 @@ export default function Withdrawals() {
   const { isOwner } = useAuth();
   const { language } = usePreferences();
   const fa = language === 'fa';
+  const confirm = useConfirm();
 
   const fmt = (v: number) =>
     `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -562,6 +564,10 @@ export default function Withdrawals() {
                           disabled={deletingId === withdrawal.id}
                           onClick={async () => {
                             if (deletingId) return;
+                            if (!await confirm(
+                              fa ? 'حذف خرج' : 'Delete expense',
+                              fa ? 'از حذف این خرج مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this expense? This action cannot be undone.'
+                            )) return;
                             try {
                               setDeletingId(withdrawal.id);
                               await remove.mutateAsync(withdrawal.id);

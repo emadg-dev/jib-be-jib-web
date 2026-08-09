@@ -6,7 +6,7 @@ type AuthContextType = {
   user: User | null; trips: Trip[]; selectedTrip: Trip | null; requiresTripSelection: boolean; loading: boolean;
   login: (session: SessionResponse) => void;
   selectTrip: (id: string) => Promise<void>;
-  createTrip: (data: { name: string; currency: string }) => Promise<void>;
+  createTrip: (data: { name: string; currency: string }) => Promise<string>;
   updateTrip: (id: string, data: { name: string; currency: string }) => Promise<void>;
   deleteTrip: (id: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -66,19 +66,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setSelectedTrip(result.trip || trips.find(trip => trip.id === id) || null); setRequiresTripSelection(false);
     window.dispatchEvent(new Event('trip-changed'));
   };
-  const createTrip = async (data: { name: string; currency: string }) => {
+  const createTrip = async (data: { name: string; currency: string }): Promise<string> => {
     const trip = payload<Trip>(await tripsApi.create(data));
-    setTrips(current => [...current, trip]); await selectTrip(trip.id);
+    setTrips(current => [...current, trip]);
+    return trip.id;
   };
   const updateTrip = async (id: string, data: { name: string; currency: string }) => {
     const updated = payload<Trip>(await tripsApi.update(id, data));
     setSelectedTrip(current => current ? { ...current, ...updated } : updated); setTrips(current => current.map(trip => trip.id === updated.id ? { ...trip, ...updated } : trip));
   };
   const deleteTrip = async (id: string) => {
-    console.log(tripsApi);
     await tripsApi.delete(id);
     setTrips(current => current.filter(trip => trip.id !== id));
-    if (selectedTrip?.id === id) setSelectedTrip(null);
   };
   const logout = async () => { try { await authApi.logout(); } finally { localStorage.removeItem('token'); setUser(null); setTrips([]); setSelectedTrip(null); setRequiresTripSelection(false); } };
   return <AuthContext.Provider value={{

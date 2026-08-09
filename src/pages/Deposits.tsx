@@ -5,6 +5,7 @@ import { gregorianToJalali } from '../utils/jalaali';
 import JalaliDatePicker from '../components/JalaliDatePicker';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { useConfirm } from '../components/ConfirmDialog';
 import { formatAmount, parseMoney } from '../utils/format';
 import {
   Card,
@@ -27,6 +28,7 @@ export default function Deposits() {
 
   const { language } = usePreferences();
   const fa = language === 'fa';
+  const confirm = useConfirm();
 
   const fmt = (v: number) =>
     `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -325,6 +327,10 @@ export default function Deposits() {
                             disabled={deletingId === d.id}
                             onClick={async () => {
                               if (deletingId) return;
+                              if (!await confirm(
+                                fa ? 'حذف واریزی' : 'Delete deposit',
+                                fa ? 'از حذف این واریزی مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this deposit? This action cannot be undone.'
+                              )) return;
                               try {
                                 setDeletingId(d.id);
                                 await remove.mutateAsync(d.id);

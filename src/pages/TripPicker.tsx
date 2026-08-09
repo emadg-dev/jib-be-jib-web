@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, type SetStateAction } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Pencil } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { useConfirm } from '../components/ConfirmDialog';
 import type { Trip } from '../api/services';
 import {
   Button,
@@ -28,6 +29,7 @@ export default function TripPicker() {
 
   const { language } = usePreferences();
   const fa = language === 'fa';
+  const confirm = useConfirm();
 
   const navigate = useNavigate();
 
@@ -64,6 +66,10 @@ export default function TripPicker() {
   };
 
   const deleteCurrentTrip = async (id: string) => {
+    if (!await confirm(
+      fa ? 'حذف سفر' : 'Delete trip',
+      fa ? 'از حذف این سفر مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this trip? This action cannot be undone.'
+    )) return;
     setBusy(true);
     try {
       await deleteTrip(id);
@@ -81,7 +87,6 @@ export default function TripPicker() {
         await updateTrip(editing.id, { name, currency });
       } else {
         await createTrip({ name, currency });
-        navigate('/dashboard');
       }
       resetForm();
     } finally {
@@ -106,7 +111,7 @@ export default function TripPicker() {
       {(creating || editing) && (
         <Card>
           <CardContent className="pt-6">
-            <p className="mb-4 text-sm font-semibold text-indigo-600">
+            <p className="mb-4 text-lg font-semibold text-indigo-600 mt-2">
               {editing
                 ? fa
                   ? `ویرایش ${editing.name}`
@@ -124,7 +129,7 @@ export default function TripPicker() {
                   id="trip-name"
                   value={name}
                   placeholder={fa ? 'مثلاً سفر شمال' : 'e.g. Summer trip'}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e: { target: { value: SetStateAction<string>; }; }) => setName(e.target.value)}
                   required
                 />
               </div>
@@ -135,9 +140,9 @@ export default function TripPicker() {
                 <Input
                   id="trip-currency"
                   value={currency}
-                  placeholder="USD"
+                  placeholder="T"
                   maxLength={3}
-                  onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                  onChange={(e: { target: { value: string; }; }) => setCurrency(e.target.value.toUpperCase())}
                   required
                 />
               </div>
@@ -211,7 +216,8 @@ export default function TripPicker() {
                     </Button>
                     <Button
                       variant="destructive"
-                      disabled={busy}
+                      disabled={busy || trip.id === selectedTrip?.id}
+                      title={trip.id === selectedTrip?.id ? (fa ? 'سفر فعال قابل حذف نیست' : 'Cannot delete active trip') : undefined}
                       onClick={() => deleteCurrentTrip(trip.id)}
                     >
                       <Trash2 size={14} className="me-1" />

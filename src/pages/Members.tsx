@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, 
 import { useForm } from 'react-hook-form';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useConfirm } from '../components/ConfirmDialog';
 import { useState } from 'react';
 import { Eye, EyeOff, Pencil } from 'lucide-react';
 
 export default function Members() {
   const { language } = usePreferences();
   const fa = language === 'fa';
+  const confirm = useConfirm();
   const { isOwner } = useAuth();
 
   const queryClient = useQueryClient();
@@ -296,6 +298,10 @@ export default function Members() {
                             disabled={deletingId === m.id}
                             onClick={async () => {
                               if (deletingId) return;
+                              if (!await confirm(
+                                fa ? 'حذف عضو' : 'Delete member',
+                                fa ? 'از حذف این عضو مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this member? This action cannot be undone.'
+                              )) return;
                               try {
                                 setDeletingId(m.id);
                                 await deleteMutation.mutateAsync(m.id);
