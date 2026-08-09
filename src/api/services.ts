@@ -20,7 +20,7 @@ export const tripsApi = {
   select: (trip_id: string) => apiClient.post<{ token: string; trip?: Trip }>('/trip/select', { trip_id }),
   create: (data: { name: string; currency: string }) => apiClient.post<Trip>('/trip', data),
   get: () => apiClient.get<Trip>('/trip'),
-  update: (data: Partial<Trip>) => apiClient.put<Trip>('/trip', data),
+  update: (id: string, data: { name: string; currency: string }) => apiClient.put<Trip>(`/trip/${id}`, data),
   delete: (id: string) => apiClient.delete(`/trip/delete/${id}`),
 };
 export const dashboardApi = { get: () => apiClient.get<DashboardData>('/dashboard') };

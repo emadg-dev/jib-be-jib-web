@@ -7,7 +7,7 @@ type AuthContextType = {
   login: (session: SessionResponse) => void;
   selectTrip: (id: string) => Promise<void>;
   createTrip: (data: { name: string; currency: string }) => Promise<void>;
-  updateTrip: (data: { name: string; currency: string }) => Promise<void>;
+  updateTrip: (id: string, data: { name: string; currency: string }) => Promise<void>;
   deleteTrip: (id: string) => Promise<void>;
   logout: () => Promise<void>;
   isOwner: boolean; isMember: boolean;
@@ -70,8 +70,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const trip = payload<Trip>(await tripsApi.create(data));
     setTrips(current => [...current, trip]); await selectTrip(trip.id);
   };
-  const updateTrip = async (data: { name: string; currency: string }) => {
-    const updated = payload<Trip>(await tripsApi.update(data));
+  const updateTrip = async (id: string, data: { name: string; currency: string }) => {
+    const updated = payload<Trip>(await tripsApi.update(id, data));
     setSelectedTrip(current => current ? { ...current, ...updated } : updated); setTrips(current => current.map(trip => trip.id === updated.id ? { ...trip, ...updated } : trip));
   };
   const deleteTrip = async (id: string) => {
