@@ -1,5 +1,6 @@
 import { useState, type SetStateAction } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { LayoutGrid, List } from 'lucide-react';
 import { depositsApi, membersApi, type Deposit } from '../api/services';
 import { gregorianToJalali } from '../utils/jalaali';
 import JalaliDatePicker from '../components/JalaliDatePicker';
@@ -42,6 +43,9 @@ export default function Deposits() {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0,10));
   const [editing, setEditing] = useState<Deposit | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>(() =>
+    typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
+  );
 
 
   const { data: deposits } = useQuery({
@@ -253,116 +257,104 @@ export default function Deposits() {
 
 
       <Card>
-
         <CardContent className="pt-6">
+          <div className="mb-4 flex items-center justify-end gap-1 mt-3">
+            <button
+              onClick={() => setViewMode('card')}
+              className={`rounded-lg p-2 transition ${viewMode === 'card' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+              aria-label={fa ? 'نمایش کارتی' : 'Card view'}
+            >
+              <LayoutGrid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`rounded-lg p-2 transition ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+              aria-label={fa ? 'نمایش جدولی' : 'Table view'}
+            >
+              <List size={18} />
+            </button>
+          </div>
 
-          <Table>
-
-            <Thead>
-
-              <Tr>
-
-                <Th>{fa ? 'تاریخ' : 'Date'}</Th>
-                <Th>{fa ? 'عضو' : 'Member'}</Th>
-                <Th>{fa ? 'توضیحات' : 'Note'}</Th>
-                <Th>{fa ? 'مبلغ' : 'Amount'}</Th>
-
-                {
-                  isOwner &&
-                  <Th>{fa ? 'عملیات' : 'Action'}</Th>
-                }
-
-              </Tr>
-
-            </Thead>
-
-
-            <Tbody>
-
-              {
-                deposits?.data?.map(d => (
-
+          {viewMode === 'table' ? (
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>{fa ? 'تاریخ' : 'Date'}</Th>
+                  <Th>{fa ? 'عضو' : 'Member'}</Th>
+                  <Th>{fa ? 'توضیحات' : 'Note'}</Th>
+                  <Th>{fa ? 'مبلغ' : 'Amount'}</Th>
+                  {isOwner && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
+                </Tr>
+              </Thead>
+              <Tbody>
+                {deposits?.data?.map(d => (
                   <Tr key={d.id}>
-
-                    <Td>
-                      {d.date ? gregorianToJalali(d.date) : gregorianToJalali(d.created_at)}
-                    </Td>
-
-                    <Td>
-                      {d.member_display_name || d.member_name}
-                    </Td>
-
-                    <Td>
-                      {d.note || '-'}
-                    </Td>
-
-                    <Td className="font-medium text-green-600">
-                      {fmt(d.amount)}
-                    </Td>
-
-
-                    {
-                      isOwner &&
+                    <Td>{d.date ? gregorianToJalali(d.date) : gregorianToJalali(d.created_at)}</Td>
+                    <Td>{d.member_display_name || d.member_name}</Td>
+                    <Td>{d.note || '-'}</Td>
+                    <Td className="font-medium text-green-600">{fmt(d.amount)}</Td>
+                    {isOwner && (
                       <Td>
-
                         <div className="flex gap-2">
-
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setEditing(d);
-                              setMemberId(d.member_id);
-                              setAmount(formatAmount(String(d.amount)));
-                              setNote(d.note || '');
-                              setDate(d.date ? d.date.slice(0,10) : d.created_at.slice(0,10));
-                            }}
-                          >
-                            {fa ? 'ویرایش' : 'Edit'}
-                          </Button>
-
-
-                          <Button
-                            variant="destructive"
-                            loading={deletingId === d.id}
-                            disabled={deletingId === d.id}
+                          <Button variant="outline" onClick={() => {
+                            setEditing(d); setMemberId(d.member_id); setAmount(formatAmount(String(d.amount)));
+                            setNote(d.note || ''); setDate(d.date ? d.date.slice(0,10) : d.created_at.slice(0,10));
+                          }}>{fa ? 'ویرایش' : 'Edit'}</Button>
+                          <Button variant="destructive" loading={deletingId === d.id} disabled={deletingId === d.id}
                             onClick={async () => {
                               if (deletingId) return;
                               if (!await confirm(
                                 fa ? 'حذف واریزی' : 'Delete deposit',
                                 fa ? 'از حذف این واریزی مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this deposit? This action cannot be undone.'
                               )) return;
-                              try {
-                                setDeletingId(d.id);
-                                await remove.mutateAsync(d.id);
-                              } finally {
-                                setDeletingId(null);
-                              }
+                              try { setDeletingId(d.id); await remove.mutateAsync(d.id); } finally { setDeletingId(null); }
                             }}
-                          >
-                            {fa ? 'حذف' : 'Delete'}
-                          </Button>
-
-
+                          >{fa ? 'حذف' : 'Delete'}</Button>
                         </div>
-
                       </Td>
-                    }
-
-
+                    )}
                   </Tr>
-
-                ))
-              }
-
-            </Tbody>
-
-          </Table>
-
+                ))}
+              </Tbody>
+            </Table>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {deposits?.data?.map(d => (
+                <div key={d.id} className="rounded-xl border border-border bg-card/60 p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-foreground">{d.member_display_name || d.member_name}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {d.date ? gregorianToJalali(d.date) : gregorianToJalali(d.created_at)}
+                        {d.note && <>{' · '}{d.note}</>}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-bold text-green-600">{fmt(d.amount)}</span>
+                  </div>
+                  {isOwner && (
+                    <div className="mt-3 flex gap-2 border-t border-border pt-3">
+                      <Button variant="outline" size="sm" onClick={() => {
+                        setEditing(d); setMemberId(d.member_id); setAmount(formatAmount(String(d.amount)));
+                        setNote(d.note || ''); setDate(d.date ? d.date.slice(0,10) : d.created_at.slice(0,10));
+                      }}>{fa ? 'ویرایش' : 'Edit'}</Button>
+                      <Button variant="destructive" size="sm" loading={deletingId === d.id} disabled={deletingId === d.id}
+                        onClick={async () => {
+                          if (deletingId) return;
+                          if (!await confirm(
+                            fa ? 'حذف واریزی' : 'Delete deposit',
+                            fa ? 'از حذف این واریزی مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this deposit? This action cannot be undone.'
+                          )) return;
+                          try { setDeletingId(d.id); await remove.mutateAsync(d.id); } finally { setDeletingId(null); }
+                        }}
+                      >{fa ? 'حذف' : 'Delete'}</Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
-
       </Card>
-
-
     </div>
   );
 }

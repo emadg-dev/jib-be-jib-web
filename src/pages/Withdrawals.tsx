@@ -1,5 +1,6 @@
 import { useState, type SetStateAction } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { LayoutGrid, List } from 'lucide-react';
 
 import {
   withdrawalsApi,
@@ -63,6 +64,9 @@ export default function Withdrawals() {
   const [shares, setShares] = useState<Shares>({});
   const [editing, setEditing] = useState<Withdrawal | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>(() =>
+    typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
+  );
 
   const active =
     members?.data?.filter((member) => member.active !== false) || [];
@@ -223,6 +227,18 @@ export default function Withdrawals() {
       );
     });
     return next;
+  };
+
+  const distributeEvenly = () => {
+    const total = parseMoney(amount) || 0;
+    if (!total || !selected.length) return;
+    const each = Math.floor((total / selected.length) * 100) / 100;
+    const remainder = Math.round((total - each * selected.length) * 100) / 100;
+    const next: Shares = {};
+    selected.forEach((id, i) => {
+      next[id] = formatAmount(String(each + (i === 0 ? remainder : 0)));
+    });
+    setShares(next);
   };
 
   const edit = (withdrawal: Withdrawal) => {
@@ -400,6 +416,17 @@ export default function Withdrawals() {
                     : 'Leave a share blank to split the remainder equally.'}
                 </p>
 
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  disabled={!selected.length || !(parseMoney(amount) > 0)}
+                  onClick={distributeEvenly}
+                >
+                  {fa ? 'تقسیم مساوی' : 'Distribute evenly'}
+                </Button>
+
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {active.map((member) => {
                     const on = selected.includes(member.id);
@@ -443,7 +470,7 @@ export default function Withdrawals() {
                               );
                             });
                           }}
-                          className="h-9 w-24 text-right"
+                          className="h-9 w-20 text-right"
                           placeholder={
                             fa ? 'سهم' : 'Share'
                           }
@@ -482,109 +509,110 @@ export default function Withdrawals() {
 
       <Card>
         <CardContent className="pt-6">
-          
-          <Table className="w-full">
-            <Thead>
-              <Tr >
-                <Th>
-                  {fa ? 'تاریخ' : 'Date'}
-                </Th>
+          <div className="mb-4 flex items-center justify-end gap-1 mt-3">
+            <button
+              onClick={() => setViewMode('card')}
+              className={`rounded-lg p-2 transition ${viewMode === 'card' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+              aria-label={fa ? 'نمایش کارتی' : 'Card view'}
+            >
+              <LayoutGrid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`rounded-lg p-2 transition ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+              aria-label={fa ? 'نمایش جدولی' : 'Table view'}
+            >
+              <List size={18} />
+            </button>
+          </div>
 
-                <Th>
-                  {fa ? 'توضیحات' : 'Description'}
-                </Th>
-
-                <Th>
-                  {fa ? 'دسته‌بندی' : 'Category'}
-                </Th>
-
-                <Th>
-                  {fa ? 'بین چه کسانی تقسیم شده' : 'Split among'}
-                </Th>
-
-                <Th>
-                  {fa ? 'مبلغ' : 'Amount'}
-                </Th>
-
-                {isOwner && (
-                  <Th>
-                    {fa ? 'عملیات' : 'Action'}
-                  </Th>
-                )}
-              </Tr>
-            </Thead>
-
-            <Tbody>
-              {withdrawals?.data?.map((withdrawal) => (
-                <Tr key={withdrawal.id}>
-                  <Td>
-                    {withdrawal.date ? gregorianToJalali(withdrawal.date) : gregorianToJalali(withdrawal.created_at)}
-                  </Td>
-
-                  <Td>
-                    {withdrawal.description}
-                  </Td>
-
-                  <Td>
-                    {categories.find(
-                      (item) =>
-                        item.value === withdrawal.category
-                    )?.label || withdrawal.category}
-                  </Td>
-
-                  <Td>
-                    {withdrawal.beneficiaries
-                      .map(
-                        (beneficiary) =>
-                          beneficiary.member_display_name ||
-                          beneficiary.member_name
-                      )
-                      .join(', ')}
-                  </Td>
-
-                  <Td className="font-medium text-red-600">
-                    {fmt(withdrawal.amount)}
-                  </Td>
-
-                  {isOwner && (
-                    <Td>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() =>
-                            edit(withdrawal)
-                          }
-                        >
-                          {fa ? 'ویرایش' : 'Edit'}
-                        </Button>
-
-                        <Button
-                          variant="destructive"
-                          loading={deletingId === withdrawal.id}
-                          disabled={deletingId === withdrawal.id}
-                          onClick={async () => {
-                            if (deletingId) return;
-                            if (!await confirm(
-                              fa ? 'حذف خرج' : 'Delete expense',
-                              fa ? 'از حذف این خرج مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this expense? This action cannot be undone.'
-                            )) return;
-                            try {
-                              setDeletingId(withdrawal.id);
-                              await remove.mutateAsync(withdrawal.id);
-                            } finally {
-                              setDeletingId(null);
-                            }
-                          }}
-                        >
-                          {fa ? 'حذف' : 'Delete'}
-                        </Button>
-                      </div>
-                    </Td>
-                  )}
+          {viewMode === 'table' ? (
+            <Table className="w-full">
+              <Thead>
+                <Tr>
+                  <Th>{fa ? 'تاریخ' : 'Date'}</Th>
+                  <Th>{fa ? 'توضیحات' : 'Description'}</Th>
+                  <Th>{fa ? 'دسته‌بندی' : 'Category'}</Th>
+                  <Th>{fa ? 'بین چه کسانی تقسیم شده' : 'Split among'}</Th>
+                  <Th>{fa ? 'مبلغ' : 'Amount'}</Th>
+                  {isOwner && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
                 </Tr>
+              </Thead>
+              <Tbody>
+                {withdrawals?.data?.map((w) => (
+                  <Tr key={w.id}>
+                    <Td>{w.date ? gregorianToJalali(w.date) : gregorianToJalali(w.created_at)}</Td>
+                    <Td>{w.description}</Td>
+                    <Td>{categories.find((c) => c.value === w.category)?.label || w.category}</Td>
+                    <Td>{w.beneficiaries.map((b) => b.member_display_name || b.member_name).join(', ')}</Td>
+                    <Td className="font-medium text-red-600">{fmt(w.amount)}</Td>
+                    {isOwner && (
+                      <Td>
+                        <div className="flex gap-2">
+                          <Button variant="outline" onClick={() => edit(w)}>{fa ? 'ویرایش' : 'Edit'}</Button>
+                          <Button
+                            variant="destructive"
+                            loading={deletingId === w.id}
+                            disabled={deletingId === w.id}
+                            onClick={async () => {
+                              if (deletingId) return;
+                              if (!await confirm(
+                                fa ? 'حذف خرج' : 'Delete expense',
+                                fa ? 'از حذف این خرج مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this expense? This action cannot be undone.'
+                              )) return;
+                              try { setDeletingId(w.id); await remove.mutateAsync(w.id); } finally { setDeletingId(null); }
+                            }}
+                          >{fa ? 'حذف' : 'Delete'}</Button>
+                        </div>
+                      </Td>
+                    )}
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {withdrawals?.data?.map((w) => (
+                <div key={w.id} className="rounded-xl border border-border bg-card/60 p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-foreground">{w.description}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {w.date ? gregorianToJalali(w.date) : gregorianToJalali(w.created_at)}
+                        {' · '}
+                        {categories.find((c) => c.value === w.category)?.label || w.category}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-bold text-red-600">{fmt(w.amount)}</span>
+                  </div>
+                  {w.beneficiaries.length > 0 && (
+                    <p className="mt-2 truncate text-xs text-muted-foreground">
+                      {w.beneficiaries.map((b) => b.member_display_name || b.member_name).join(', ')}
+                    </p>
+                  )}
+                  {isOwner && (
+                    <div className="mt-3 flex gap-2 border-t border-border pt-3">
+                      <Button variant="outline" size="sm" onClick={() => edit(w)}>{fa ? 'ویرایش' : 'Edit'}</Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        loading={deletingId === w.id}
+                        disabled={deletingId === w.id}
+                        onClick={async () => {
+                          if (deletingId) return;
+                          if (!await confirm(
+                            fa ? 'حذف خرج' : 'Delete expense',
+                            fa ? 'از حذف این خرج مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this expense? This action cannot be undone.'
+                          )) return;
+                          try { setDeletingId(w.id); await remove.mutateAsync(w.id); } finally { setDeletingId(null); }
+                        }}
+                      >{fa ? 'حذف' : 'Delete'}</Button>
+                    </div>
+                  )}
+                </div>
               ))}
-            </Tbody>
-          </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

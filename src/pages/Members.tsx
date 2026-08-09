@@ -6,7 +6,7 @@ import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useState } from 'react';
-import { Eye, EyeOff, Pencil } from 'lucide-react';
+import { Eye, EyeOff, Pencil, LayoutGrid, List } from 'lucide-react';
 
 export default function Members() {
   const { language } = usePreferences();
@@ -19,6 +19,9 @@ export default function Members() {
   const [showPassword, setShowPassword] = useState(false);
   const [editingMember, setEditingMember] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>(() =>
+    typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
+  );
 
   const { data: members } = useQuery({
     queryKey: ['members'],
@@ -232,108 +235,122 @@ export default function Members() {
 
 
       <Card>
-
         <CardContent className="pt-6">
+          <div className="mb-4 flex items-center justify-end gap-1 mt-3">
+            <button
+              onClick={() => setViewMode('card')}
+              className={`rounded-lg p-2 transition ${viewMode === 'card' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+              aria-label={fa ? 'نمایش کارتی' : 'Card view'}
+            >
+              <LayoutGrid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`rounded-lg p-2 transition ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+              aria-label={fa ? 'نمایش جدولی' : 'Table view'}
+            >
+              <List size={18} />
+            </button>
+          </div>
 
-          <Table>
-
-            <Thead>
-
-              <Tr>
-                <Th>{fa ? 'نام نمایشی' : 'Display name'}</Th>
-                <Th>{fa ? 'نام کاربری' : 'Username'}</Th>
-                <Th>{fa ? 'نقش' : 'Role'}</Th>
-                <Th>{fa ? 'تاریخ عضویت' : 'Joined'}</Th>
-                {isOwner && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
-
-              </Tr>
-
-            </Thead>
-
-
-            <Tbody>
-
-              {
-                members?.data?.map(m => (
-
+          {viewMode === 'table' ? (
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>{fa ? 'نام نمایشی' : 'Display name'}</Th>
+                  <Th>{fa ? 'نام کاربری' : 'Username'}</Th>
+                  <Th>{fa ? 'نقش' : 'Role'}</Th>
+                  <Th>{fa ? 'تاریخ عضویت' : 'Joined'}</Th>
+                  {isOwner && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
+                </Tr>
+              </Thead>
+              <Tbody>
+                {members?.data?.map(m => (
                   <Tr key={m.id}>
-
-                    <Td className="font-medium">
-                      {m.display_name || m.name}
-                    </Td>
-
-
-                    <Td className="text-slate-500">
-                      {m.name}
-                    </Td>
-
+                    <Td className="font-medium">{m.display_name || m.name}</Td>
+                    <Td className="text-slate-500">{m.name}</Td>
                     <Td className="capitalize">
                       {m.role}{m.active === false && <span className="ms-2 text-xs text-amber-600">{fa ? 'غیرفعال' : 'Inactive'}</span>}
                     </Td>
-
-
-                    <Td>
-                      {new Date(m.created_at).toLocaleDateString()}
-                    </Td>
-
-
-                    {isOwner && <Td>
-
-                      <div className="flex gap-2">
-
-                        <Button
-                          variant="secondary"
-                          onClick={() => editMember(m)}
-                        >
-                          <Pencil size={16} />
-                          {fa ? 'ویرایش' : 'Edit'}
-                        </Button>
-
-
-                        {
-                          m.role !== 'owner' &&
-                          <Button
-                            variant="destructive"
-                            loading={deletingId === m.id}
-                            disabled={deletingId === m.id}
-                            onClick={async () => {
-                              if (deletingId) return;
-                              if (!await confirm(
-                                fa ? 'حذف عضو' : 'Delete member',
-                                fa ? 'از حذف این عضو مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this member? This action cannot be undone.'
-                              )) return;
-                              try {
-                                setDeletingId(m.id);
-                                await deleteMutation.mutateAsync(m.id);
-                              } finally {
-                                setDeletingId(null);
-                              }
-                            }}
-                          >
-                            {fa ? 'حذف' : 'Remove'}
+                    <Td>{new Date(m.created_at).toLocaleDateString()}</Td>
+                    {isOwner && (
+                      <Td>
+                        <div className="flex gap-2">
+                          <Button variant="secondary" onClick={() => editMember(m)}>
+                            <Pencil size={16} />{fa ? 'ویرایش' : 'Edit'}
                           </Button>
-                        }
-
-                      </div>
-
-                    </Td>}
-
-
-
+                          {m.role !== 'owner' && (
+                            <Button
+                              variant="destructive"
+                              loading={deletingId === m.id}
+                              disabled={deletingId === m.id}
+                              onClick={async () => {
+                                if (deletingId) return;
+                                if (!await confirm(
+                                  fa ? 'حذف عضو' : 'Delete member',
+                                  fa ? 'از حذف این عضو مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this member? This action cannot be undone.'
+                                )) return;
+                                try { setDeletingId(m.id); await deleteMutation.mutateAsync(m.id); } finally { setDeletingId(null); }
+                              }}
+                            >{fa ? 'حذف' : 'Remove'}</Button>
+                          )}
+                        </div>
+                      </Td>
+                    )}
                   </Tr>
-
-                ))
-              }
-
-            </Tbody>
-
-          </Table>
-
+                ))}
+              </Tbody>
+            </Table>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {members?.data?.map(m => (
+                <div key={m.id} className="rounded-xl border border-border bg-card/60 p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-foreground">{m.display_name || m.name}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">@{m.name}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${m.role === 'owner' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
+                      {m.role === 'owner' ? (fa ? 'مدیر' : 'Owner') : (fa ? 'عضو' : 'Member')}
+                    </span>
+                  </div>
+                  {m.active === false && (
+                    <span className="mt-2 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                      {fa ? 'غیرفعال' : 'Inactive'}
+                    </span>
+                  )}
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {fa ? 'عضویت:' : 'Joined:'} {new Date(m.created_at).toLocaleDateString()}
+                  </p>
+                  {isOwner && (
+                    <div className="mt-3 flex gap-2 border-t border-border pt-3">
+                      <Button variant="outline" size="sm" onClick={() => editMember(m)}>
+                        <Pencil size={14} className="me-1" />{fa ? 'ویرایش' : 'Edit'}
+                      </Button>
+                      {m.role !== 'owner' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          loading={deletingId === m.id}
+                          disabled={deletingId === m.id}
+                          onClick={async () => {
+                            if (deletingId) return;
+                            if (!await confirm(
+                              fa ? 'حذف عضو' : 'Delete member',
+                              fa ? 'از حذف این عضو مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this member? This action cannot be undone.'
+                            )) return;
+                            try { setDeletingId(m.id); await deleteMutation.mutateAsync(m.id); } finally { setDeletingId(null); }
+                          }}
+                        >{fa ? 'حذف' : 'Remove'}</Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
-
       </Card>
-
-
     </div>
   );
 }

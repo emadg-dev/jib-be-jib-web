@@ -2,19 +2,22 @@ import { useQuery } from '@tanstack/react-query';
 import { dashboardApi } from '../api/services';
 import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td } from '../components/ui/core';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { ArrowRight, Wallet, TrendingUp, TrendingDown, Users, DollarSign } from 'lucide-react';
+import { ArrowRight, Wallet, TrendingUp, TrendingDown, Users, DollarSign, LayoutGrid, List } from 'lucide-react';
 import { usePreferences } from '../contexts/PreferencesContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 const fmt = (v: number) =>
-  `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  `${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 
 export default function Dashboard() {
   const { language } = usePreferences();
   const fa = language === 'fa';
+  const [memberView, setMemberView] = useState<'card' | 'table'>(() =>
+    typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
+  );
 
   useEffect(() => {
     fetch(
@@ -68,7 +71,7 @@ export default function Dashboard() {
       </div>
 
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 text-center">
 
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -79,8 +82,10 @@ export default function Dashboard() {
           </CardHeader>
 
           <CardContent>
-          <div className="text-2xl font-bold text-foreground">
+          <div className="text-2xl font-bold text-foreground " dir='ltr'>
+          
             {fmt(data.currentBankBalance)}
+
           </div>
           </CardContent>
         </Card>
@@ -118,7 +123,7 @@ export default function Dashboard() {
         </Card>
 
 
-        <Card className="shadow-sm items-center justify-between">
+        <Card className="shadow-sm ">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">
               {fa ? 'اعضای فعال' : 'Active Members'}
@@ -126,7 +131,7 @@ export default function Dashboard() {
             <Users className="w-5 h-5 text-blue-600" />
           </CardHeader>
 
-          <CardContent className="flex flex-row items-center justify-between">
+          <CardContent >
           <div className=" text-2xl font-medium text-foreground">
             {data.members.length}
           </div>
@@ -138,49 +143,75 @@ export default function Dashboard() {
 
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
-            {fa ? 'وضعیت حساب اعضا' : 'Member Financial Breakdown'}
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold">
+              {fa ? 'وضعیت حساب اعضا' : 'Member Financial Breakdown'}
+            </CardTitle>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setMemberView('card')}
+                className={`rounded-lg p-2 transition ${memberView === 'card' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+                aria-label={fa ? 'نمایش کارتی' : 'Card view'}
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setMemberView('table')}
+                className={`rounded-lg p-2 transition ${memberView === 'table' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+                aria-label={fa ? 'نمایش جدولی' : 'Table view'}
+              >
+                <List size={18} />
+              </button>
+            </div>
+          </div>
         </CardHeader>
 
         <CardContent>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>{fa ? 'نام عضو' : 'Member Name'}</Th>
-                <Th>{fa ? 'کل واریزی' : 'Total Deposited'}</Th>
-                <Th>{fa ? 'کل هزینه‌ها' : 'Total Consumed'}</Th>
-                <Th>{fa ? 'مانده حساب' : 'Net Balance'}</Th>
-              </Tr>
-            </Thead>
-
-            <Tbody>
-              {data.members.map((m) => (
-                <Tr key={m.member_id}>
-                  <Td className="font-medium text-gray-900">{m.display_name || m.name}</Td>
-
-                  <Td className="text-green-600 font-semibold">
-                    {fmt(m.total_deposited)}
-                  </Td>
-
-                  <Td className="text-red-600 font-semibold">
-                    {fmt(m.total_expenses)}
-                  </Td>
-
-                  <Td className={`font-bold ${
-                    m.balance > 0
-                      ? 'text-indigo-600'
-                      : m.balance < 0
-                        ? 'text-amber-600'
-                        : 'text-gray-600'
-                  }`}>
-                    {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
-                  </Td>
-
+          {memberView === 'table' ? (
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>{fa ? 'نام عضو' : 'Member Name'}</Th>
+                  <Th>{fa ? 'کل واریزی' : 'Total Deposited'}</Th>
+                  <Th>{fa ? 'کل هزینه‌ها' : 'Total Consumed'}</Th>
+                  <Th>{fa ? 'مانده حساب' : 'Net Balance'}</Th>
                 </Tr>
+              </Thead>
+              <Tbody>
+                {data.members.map((m) => (
+                  <Tr key={m.member_id}>
+                    <Td className="font-medium text-gray-900">{m.display_name || m.name}</Td>
+                    <Td className="text-green-600 font-semibold">{fmt(m.total_deposited)}</Td>
+                    <Td className="text-red-600 font-semibold">{fmt(m.total_expenses)}</Td>
+                    <Td className={`font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
+                      {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {data.members.map((m) => (
+                <div key={m.member_id} className="rounded-xl border border-border bg-card/60 p-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <p className="truncate font-semibold text-foreground">{m.display_name || m.name}</p>
+                    <span className={`text-sm font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
+                      {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
+                    <span className="text-green-600">
+                      {fa ? 'واریزی:' : 'Deposited:'} {fmt(m.total_deposited)}
+                    </span>
+                    <span className="text-red-600">
+                      {fa ? 'هزینه:' : 'Spent:'} {fmt(m.total_expenses)}
+                    </span>
+                  </div>
+                </div>
               ))}
-            </Tbody>
-          </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
