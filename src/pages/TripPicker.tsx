@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
   Input,
-  Label
+  Label,
 } from '../components/ui/core';
 
 export default function TripPicker() {
@@ -102,12 +102,11 @@ export default function TripPicker() {
   return (
     <div
       dir={fa ? 'rtl' : 'ltr'}
-      className="flex min-h-screen items-center justify-center p-4"
+      className="flex items-center justify-center"
     >
+        <div>
 
-      <Card className="w-full max-w-3xl">
-
-        <CardHeader>
+        <CardHeader className="w-full max-w-3xl">
 
           <CardTitle className="text-2xl">
 
@@ -121,11 +120,14 @@ export default function TripPicker() {
               fa
                 ? 'یکی از سفرها رو انتخاب کن تا هزینه‌ها، اعضا و حساب‌هاش رو ببینی.'
                 : 'Choose a trip to manage its budget, members and expenses.'
-            }
+              }
 
           </p>
 
         </CardHeader>
+
+      <Card className="w-full max-w-3xl pt-4">
+
 
 
         <CardContent className="space-y-5">
@@ -151,7 +153,7 @@ export default function TripPicker() {
                 onSubmit={(e) => save(e)}
                 busy={busy}
                 label={fa ? 'ذخیره تغییرات' : 'Save trip'}
-              />
+                />
 
             </div>
 
@@ -170,7 +172,7 @@ export default function TripPicker() {
               </p>
             </div>
           ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
 
             {active.map(trip => (
 
@@ -212,19 +214,19 @@ export default function TripPicker() {
                   <Button
                     onClick={() => choose(trip.id)}
                     disabled={busy}
-                  >
+                    >
                     {fa ? 'ورود به سفر' : 'Open trip'}
                   </Button>
 
 
                   {trip.role === 'owner' && (
-
+                    
                     <>
                       <Button
                         variant="outline"
                         onClick={() => beginEdit(trip)}
                         disabled={busy}
-                      >
+                        >
                         {fa ? 'ویرایش' : 'Edit'}
                       </Button>
 
@@ -268,7 +270,7 @@ export default function TripPicker() {
                   creating
                     ? (fa ? 'لغو' : 'Cancel')
                     : (fa ? 'یه سفر جدید بساز' : 'Create a new trip')
-                }
+                  }
 
               </button>
 
@@ -276,7 +278,7 @@ export default function TripPicker() {
               {creating && (
 
                 <TripForm
-                  fa={fa}
+                fa={fa}
                   name={name}
                   currency={currency}
                   setName={setName}
@@ -284,9 +286,9 @@ export default function TripPicker() {
                   onSubmit={(e) => save(e, true)}
                   busy={busy}
                   label={fa ? 'ساخت سفر' : 'Create trip'}
-                />
-
-              )}
+                  />
+                  
+                )}
 
             </div>
 
@@ -303,6 +305,7 @@ export default function TripPicker() {
         </CardContent>
 
       </Card>
+    </div>
 
     </div>
   );

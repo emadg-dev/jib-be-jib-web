@@ -56,9 +56,9 @@ const AppRoutes = () => {
   return (
   <Routes>
     <Route path="/login" element={user ? <Navigate to={needsTrip ? '/trips' : '/dashboard'} replace /> : <Login />} />
-    <Route path="/trips" element={<ProtectedRoute><TripPicker /></ProtectedRoute>} />
     <Route path="/" element={<ProtectedRoute>{needsTrip ? <Navigate to="/trips" replace /> : <AppLayout />}</ProtectedRoute>}>
       <Route index element={<Navigate to="/dashboard" replace />} />
+      <Route path="trips" element={<TripPicker />} />
       <Route path="dashboard" element={<Dashboard />} />
       <Route path="members"element={<RoleRoute roles={['owner']}><Members /></RoleRoute>}/>
       <Route path="deposits" element={<Deposits />} />
