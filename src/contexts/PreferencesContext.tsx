@@ -13,7 +13,7 @@ type Preferences = {
 const PreferencesContext = createContext<Preferences | null>(null);
 
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('language') as Language) || 'en');
+  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('language') as Language) || 'fa');
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'light');
 
   useEffect(() => {
