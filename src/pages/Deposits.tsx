@@ -1,6 +1,6 @@
 import { useState, type SetStateAction } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List, Plus } from 'lucide-react';
 import { depositsApi, membersApi, type Deposit } from '../api/services';
 import { gregorianToJalali } from '../utils/jalaali';
 import JalaliDatePicker from '../components/JalaliDatePicker';
@@ -46,6 +46,7 @@ export default function Deposits() {
   const [viewMode, setViewMode] = useState<'card' | 'table'>(() =>
     typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
   );
+  const [showForm, setShowForm] = useState(false);
 
 
   const { data: deposits } = useQuery({
@@ -71,6 +72,7 @@ export default function Deposits() {
     setMemberId('');
     setDate(new Date().toISOString().slice(0,10));
     setEditing(null);
+    setShowForm(false);
   };
 
 
@@ -139,7 +141,14 @@ export default function Deposits() {
       </div>
 
 
-      {isOwner &&
+      {isOwner && !showForm && !editing && (
+        <Button onClick={() => setShowForm(true)} className="w-full">
+          <Plus size={18} className="me-1" />
+          {fa ? 'افزودن واریزی جدید' : 'Add new deposit'}
+        </Button>
+      )}
+
+      {isOwner && (showForm || editing) &&
 
       <Card>
 
@@ -296,9 +305,10 @@ export default function Deposits() {
                     {isOwner && (
                       <Td>
                         <div className="flex gap-2">
-                          <Button variant="outline" onClick={() => {
+                           <Button variant="outline" onClick={() => {
                             setEditing(d); setMemberId(d.member_id); setAmount(formatAmount(String(d.amount)));
                             setNote(d.note || ''); setDate(d.date ? d.date.slice(0,10) : d.created_at.slice(0,10));
+                            setShowForm(true);
                           }}>{fa ? 'ویرایش' : 'Edit'}</Button>
                           <Button variant="destructive" loading={deletingId === d.id} disabled={deletingId === d.id}
                             onClick={async () => {
@@ -336,6 +346,7 @@ export default function Deposits() {
                       <Button variant="outline" size="sm" onClick={() => {
                         setEditing(d); setMemberId(d.member_id); setAmount(formatAmount(String(d.amount)));
                         setNote(d.note || ''); setDate(d.date ? d.date.slice(0,10) : d.created_at.slice(0,10));
+                        setShowForm(true);
                       }}>{fa ? 'ویرایش' : 'Edit'}</Button>
                       <Button variant="destructive" size="sm" loading={deletingId === d.id} disabled={deletingId === d.id}
                         onClick={async () => {

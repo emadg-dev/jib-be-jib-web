@@ -1,6 +1,6 @@
 import { useState, type SetStateAction } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List, Plus } from 'lucide-react';
 
 import {
   withdrawalsApi,
@@ -67,6 +67,7 @@ export default function Withdrawals() {
   const [viewMode, setViewMode] = useState<'card' | 'table'>(() =>
     typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
   );
+  const [showForm, setShowForm] = useState(false);
 
   const active =
     members?.data?.filter((member) => member.active !== false) || [];
@@ -89,6 +90,7 @@ export default function Withdrawals() {
     setSelected([]);
     setShares({});
     setEditing(null);
+    setShowForm(false);
   };
 
   const create = useMutation({
@@ -292,7 +294,14 @@ export default function Withdrawals() {
         </p>
       </div>
 
-      {isOwner && (
+      {isOwner && !showForm && !editing && (
+        <Button onClick={() => setShowForm(true)} className="w-full">
+          <Plus size={18} className="me-1" />
+          {fa ? 'ثبت خرج جدید' : 'Record new expense'}
+        </Button>
+      )}
+
+      {isOwner && (showForm || editing) && (
         <Card>
           <CardHeader>
             <CardTitle>
@@ -549,7 +558,7 @@ export default function Withdrawals() {
                     {isOwner && (
                       <Td>
                         <div className="flex gap-2">
-                          <Button variant="outline" onClick={() => edit(w)}>{fa ? 'ویرایش' : 'Edit'}</Button>
+                           <Button variant="outline" onClick={() => { edit(w); setShowForm(true); }}>{fa ? 'ویرایش' : 'Edit'}</Button>
                           <Button
                             variant="destructive"
                             loading={deletingId === w.id}
@@ -592,7 +601,7 @@ export default function Withdrawals() {
                   )}
                   {isOwner && (
                     <div className="mt-3 flex gap-2 border-t border-border pt-3">
-                      <Button variant="outline" size="sm" onClick={() => edit(w)}>{fa ? 'ویرایش' : 'Edit'}</Button>
+                       <Button variant="outline" size="sm" onClick={() => { edit(w); setShowForm(true); }}>{fa ? 'ویرایش' : 'Edit'}</Button>
                       <Button
                         variant="destructive"
                         size="sm"
