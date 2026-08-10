@@ -4,18 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle, Button, Input, Label } from '
 import { useForm } from 'react-hook-form';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useState } from 'react';
-import { Eye, EyeOff, User, Lock } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Eye, EyeOff, User, Lock, Camera } from 'lucide-react';
 import { translateError } from '../utils/translations';
+import Avatar from '../components/Avatar';
+import { processAvatar } from '../utils/avatar';
 
 export default function Profile() {
   const { language } = usePreferences();
   const fa = language === 'fa';
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile } = useQuery({
     queryKey: ['profile'],
@@ -47,6 +52,56 @@ export default function Profile() {
     },
   });
 
+  const avatarMutation = useMutation({
+    mutationFn: profileApi.uploadAvatar,
+    onSuccess: (res: any) => {
+      debugger
+      const avatarUrl = res?.data?.avatar;
+      if (avatarUrl) {
+        updateUser({ avatar: avatarUrl });
+        setAvatarPreview(null);
+        setSuccessMessage(fa ? 'تصویر پروفایل آپلود شد' : 'Profile picture updated');
+      }
+    },
+    onError: (error: any) => {
+      const rawMessage = error?.message || 'Error uploading avatar';
+      setErrorMessage(translateError(rawMessage, fa));
+    },
+  });
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    debugger
+    try {
+      const processed = await processAvatar(file, 256, 0.85);
+      setAvatarPreview(processed);
+      setErrorMessage('');
+      setSuccessMessage('');
+    } catch {
+      setErrorMessage(fa ? 'خطا در پردازش تصویر' : 'Error processing image');
+      setAvatarPreview(null);
+    }
+  };
+
+  const handleUploadAvatar = async () => {
+    if (!avatarPreview) return;
+    setAvatarUploading(true);
+    try {
+      await avatarMutation.mutateAsync({ avatar: avatarPreview });
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarPreview(null);
+    updateUser({ avatar: undefined });
+    try {
+      await avatarMutation.mutateAsync({ avatar: '' });
+    } catch { /* optimistic UI already applied */ }
+  };
+
   const onSubmit = (data: { current_password: string; new_password: string; confirm_password: string }) => {
     if (data.new_password !== data.confirm_password) {
       setErrorMessage(fa ? 'رمز عبور جدید مطابقت ندارد' : 'New passwords do not match');
@@ -59,6 +114,9 @@ export default function Profile() {
   };
 
   const displayProfile = profile?.data;
+  const hasUnsavedPreview = avatarPreview !== null;
+  const currentAvatar = displayProfile?.avatar || user?.avatar;
+  const displayAvatar = avatarPreview || currentAvatar;
 
   return (
     <div dir={fa ? 'rtl' : 'ltr'} className="space-y-6">
@@ -83,6 +141,58 @@ export default function Profile() {
           </CardHeader>
           <CardContent>
             <div className="space-y-5">
+              {/* Avatar section */}
+              <div className="flex flex-col items-center gap-4 pb-4 border-b border-border">
+                <div className="relative group">
+                  <Avatar src={displayAvatar} name={displayProfile?.display_name || user?.name} size={80} className="ring-4 ring-background shadow-lg" />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute -end-1 -bottom-1 grid h-8 w-8 place-items-center rounded-full bg-indigo-600 text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100"
+                    title={fa ? 'تغییر تصویر' : 'Change photo'}
+                  >
+                    <Camera size={14} />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-foreground">{displayProfile?.display_name || user?.name}</p>
+                  <p className="text-xs text-muted-foreground">@{displayProfile?.name || user?.name}</p>
+                </div>
+              </div>
+
+              {/* Preview / Upload controls */}
+              <div className="flex items-center justify-center gap-3">
+                {hasUnsavedPreview && (
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    disabled={avatarUploading}
+                    onClick={handleUploadAvatar}
+                    className="min-w-[120px]"
+                  >
+                    {avatarUploading
+                      ? (fa ? 'در حال ذخیره...' : 'Saving...')
+                      : (fa ? 'ذخیره تصویر' : 'Save Photo')}
+                  </Button>
+                )}
+                {(hasUnsavedPreview || currentAvatar) && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleRemoveAvatar}
+                    className="min-w-[120px]"
+                  >
+                    {fa ? 'حذف تصویر' : 'Remove Photo'}
+                  </Button>
+                )}
+              </div>
+
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   {fa ? 'نام کاربری' : 'Username'}

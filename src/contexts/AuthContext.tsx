@@ -10,6 +10,7 @@ type AuthContextType = {
   updateTrip: (id: string, data: { name: string; currency: string }) => Promise<void>;
   deleteTrip: (id: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (partial: Partial<User>) => void;
   isOwner: boolean; isMember: boolean;
 };
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -80,9 +81,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setTrips(current => current.filter(trip => trip.id !== id));
   };
   const logout = async () => { try { await authApi.logout(); } finally { localStorage.removeItem('token'); setUser(null); setTrips([]); setSelectedTrip(null); setRequiresTripSelection(false); } };
+  const updateUser = (partial: Partial<User>) => setUser(u => u ? { ...u, ...partial } : u);
   return <AuthContext.Provider value={{
     user, trips, selectedTrip, requiresTripSelection, loading, login,
-    selectTrip, createTrip, updateTrip, deleteTrip, logout,
+    selectTrip, createTrip, updateTrip, deleteTrip, logout, updateUser,
     isOwner: selectedTrip?.role === 'owner', isMember: selectedTrip?.role === 'member'
   }}>{children}</AuthContext.Provider>;
 };

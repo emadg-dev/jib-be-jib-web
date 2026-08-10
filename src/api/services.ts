@@ -1,7 +1,7 @@
 import { apiClient } from './client';
 
 export interface Trip { id: string; name: string; currency: string; active?: boolean; role?: 'owner' | 'member'; }
-export interface User { id: string; name: string; display_name?: string; role: 'owner' | 'member'; trip_id?: string; }
+export interface User { id: string; name: string; display_name?: string; role: 'owner' | 'member'; trip_id?: string; preferences?: Record<string, boolean>; avatar?: string; }
 export interface SessionResponse { user: User; trips: Trip[]; requires_trip_selection: boolean; token?: string; selected_trip?: Trip; }
 export interface Member { id: string; trip_id: string; name: string; display_name: string; role: string; active: boolean; created_at: string; }
 export interface Deposit { id: string; trip_id: string; member_id: string; member_name: string; member_display_name?: string; amount: number; note: string; date?: string; created_at: string; }
@@ -36,4 +36,6 @@ export const withdrawalsApi = { getAll: () => apiClient.get<Withdrawal[]>('/with
 export const profileApi = {
   get: () => apiClient.get<User>('/profile'),
   changePassword: (data: { current_password: string; new_password: string }) => apiClient.put('/profile/password', data),
+  updatePreferences: (data: Record<string, boolean>) => apiClient.put('/profile/preferences', data),
+  uploadAvatar: (data: { avatar: string }) => apiClient.put('/profile/avatar', data),
 };

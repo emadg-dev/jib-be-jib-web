@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, LogOut, Languages, Moon, Sun, Map, User } from 'lucide-react';
+import Avatar from '../components/Avatar';
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
@@ -30,7 +31,7 @@ export default function AppLayout() {
           nav={filteredNav}
           pathname={location.pathname}
         />
-        <UserMenu name={user?.name} {...controls} />
+        <UserMenu name={user?.display_name} avatar={user?.avatar} {...controls} />
         <div className="px-4 py-4 text-center text-xs text-muted-foreground/60">
           Made with <span className="inline-block text-red-500 animate-pulse">♥</span> by Emzi and MiMo
         </div>
@@ -197,16 +198,14 @@ function ControlButton({ children, label, onClick, loading = false, disabled = f
   );
 }
 
-function UserMenu({ name, ...controls }: any) {
+function UserMenu({ name, avatar, ...controls }: any) {
   return (
     <div className="m-4 rounded-2xl border border-border bg-card/60 backdrop-blur p-3">
       <Link
         to="/profile"
         className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-accent"
       >
-        <div className="grid h-9 w-9 place-items-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200">
-          {name?.slice(0, 1).toUpperCase() || 'U'}
-        </div>
+        <Avatar src={avatar} name={name} size={36} />
         <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
           {name}
         </span>

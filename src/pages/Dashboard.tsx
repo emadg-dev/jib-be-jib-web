@@ -1,15 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
-import { dashboardApi, withdrawalsApi } from '../api/services';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { dashboardApi, withdrawalsApi, profileApi } from '../api/services';
 import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td } from '../components/ui/core';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { ArrowRight, Wallet, TrendingUp, TrendingDown, Users, DollarSign, LayoutGrid, List } from 'lucide-react';
+import { ArrowRight, Wallet, TrendingUp, TrendingDown, Users, DollarSign, LayoutGrid, List, SlidersHorizontal } from 'lucide-react';
 import { usePreferences } from '../contexts/PreferencesContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { DashboardSkeleton } from '../components/Skeleton';
 import ExpenseTimeline from '../components/ExpenseTimeline';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+const SECTION_KEYS = ['stats', 'memberBreakdown', 'memberNetExpenses', 'categoryBreakdown', 'timeline', 'settlements'] as const;
+type SectionKey = typeof SECTION_KEYS[number];
 
 const CATEGORY_FA: Record<string, string> = {
   Food: 'غذا',
@@ -26,10 +29,44 @@ const fmt = (v: number) =>
 export default function Dashboard() {
   const { language } = usePreferences();
   const fa = language === 'fa';
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [memberView, setMemberView] = useState<'card' | 'table'>(() =>
     typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
   );
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setCustomizeOpen(false);
+      }
+    };
+    if (customizeOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [customizeOpen]);
+
+  const updatePrefsMutation = useMutation({
+    mutationFn: profileApi.updatePreferences,
+    onError: () => {},
+  });
+
+  const isVisible = (key: SectionKey) => user?.preferences?.[key] !== false;
+
+  const toggleSection = (key: SectionKey) => {
+    const newPrefs = { ...user?.preferences, [key]: !isVisible(key) };
+    updateUser({ preferences: newPrefs });
+    updatePrefsMutation.mutate(newPrefs);
+  };
+
+  const SECTION_LABELS: Record<SectionKey, { en: string; fa: string }> = {
+    stats: { en: 'Stats overview', fa: 'خلاصه آماری' },
+    memberBreakdown: { en: 'Member Financial Breakdown', fa: 'وضعیت حساب اعضا' },
+    memberNetExpenses: { en: 'Member Net Expenses', fa: 'هزینه خالص اعضا' },
+    categoryBreakdown: { en: 'Expenses by Category', fa: 'هزینه‌ها بر اساس دسته‌بندی' },
+    timeline: { en: 'Expense Timeline', fa: 'خط زمانی هزینه‌ها' },
+    settlements: { en: 'Suggested Settlements', fa: 'پیشنهاد تسویه حساب' },
+  };
 
   useEffect(() => {
     fetch(
@@ -70,19 +107,56 @@ export default function Dashboard() {
   return (
     <div dir={fa ? 'rtl' : 'ltr'} className="space-y-6 pb-4">
 
-      <div>
-        <h1 className="page-title">
-          {fa ? 'داشبورد سفر' : 'Trip dashboard'}
-        </h1>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="page-title">
+            {fa ? 'داشبورد سفر' : 'Trip dashboard'}
+          </h1>
 
-        <p className="page-subtitle">
-          {fa
-            ? 'اینجا می‌تونی وضعیت هزینه‌ها و حساب‌های سفر رو ببینی.'
-            : 'A clear view of your shared trip budget.'}
-        </p>
+          <p className="page-subtitle">
+            {fa
+              ? 'اینجا می‌تونی وضعیت هزینه‌ها و حساب‌های سفر رو ببینی.'
+              : 'A clear view of your shared trip budget.'}
+          </p>
+        </div>
+
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setCustomizeOpen(!customizeOpen)}
+            className="grid h-10 w-10 place-items-center rounded-xl bg-card text-muted-foreground shadow-sm transition hover:bg-accent hover:text-accent-foreground"
+            aria-label={fa ? 'سفارشی‌سازی داشبورد' : 'Customize dashboard'}
+            title={fa ? 'سفارشی‌سازی داشبورد' : 'Customize dashboard'}
+          >
+            <SlidersHorizontal size={18} />
+          </button>
+          {customizeOpen && (
+            <div className="absolute end-0 top-full z-30 mt-2 w-64 rounded-2xl border border-border bg-card p-3 shadow-lg">
+              <p className="mb-2 px-2 text-xs font-semibold text-muted-foreground">
+                {fa ? 'بخش‌های نمایشی' : 'Visible sections'}
+              </p>
+              <div className="space-y-1">
+                {SECTION_KEYS.map((key) => (
+                  <label
+                    key={key}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition hover:bg-accent"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isVisible(key)}
+                      onChange={() => toggleSection(key)}
+                      className="h-4 w-4 rounded border-border accent-indigo-600"
+                    />
+                    <span className="text-foreground">{fa ? SECTION_LABELS[key].fa : SECTION_LABELS[key].en}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
 
+      {isVisible('stats') && (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 text-center">
 
         <Card className="shadow-sm">
@@ -151,8 +225,10 @@ export default function Dashboard() {
         </Card>
 
       </div>
+      )}
 
 
+      {isVisible('memberBreakdown') && (
       <Card className="shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -232,10 +308,12 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+      )}
 
 
       <div className="grid gap-4 md:grid-cols-2">
 
+        {isVisible('memberNetExpenses') && (
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">
@@ -263,8 +341,10 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+        )}
 
 
+        {isVisible('categoryBreakdown') && (
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">
@@ -313,16 +393,20 @@ export default function Dashboard() {
   </div>
 </CardContent>
         </Card>
+        )}
 
       </div>
 
 
+      {isVisible('timeline') && (
       <ExpenseTimeline
         withdrawals={withdrawalsRes?.data}
         loading={isLoadingWithdrawals}
       />
+      )}
 
 
+      {isVisible('settlements') && (
       <Card className="shadow-sm">
 
         <CardHeader>
@@ -417,6 +501,7 @@ export default function Dashboard() {
         </CardContent>
 
       </Card>
+      )}
 
     </div>
   );
