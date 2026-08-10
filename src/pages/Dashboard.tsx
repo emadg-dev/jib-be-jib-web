@@ -408,12 +408,14 @@ export default function Dashboard() {
 
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-2">
+
 
       {isVisible('timeline') && (
-      <ExpenseTimeline
+        <ExpenseTimeline
         withdrawals={withdrawalsRes?.data}
         loading={isLoadingWithdrawals}
-      />
+        />
       )}
 
 
@@ -437,7 +439,7 @@ export default function Dashboard() {
             <p className="text-sm text-gray-500 py-4 text-center">
               {
                 fa
-                  ? 'همه حساب‌ها صاف شده! نیازی به انتقال پول نیست.'
+                ? 'همه حساب‌ها صاف شده! نیازی به انتقال پول نیست.'
                   : 'All balances are completely settled up! No transfers required.'
               }
             </p>
@@ -447,7 +449,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
               {data.settlements.map((s,i)=>{
-
+                
                 const bgColors = [
                   'bg-gradient-to-br from-indigo-50 to-blue-50 border-indigo-200/60',
                   'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200/60',
@@ -474,10 +476,10 @@ export default function Dashboard() {
                 ];
 
                 return (
-                <div
+                  <div
                   key={i}
                   className={`flex items-center justify-between p-4 rounded-xl border shadow-sm ${bgColors[i % bgColors.length]}`}
-                >
+                  >
 
                   <div className="flex items-center gap-2 min-w-0">
 
@@ -513,6 +515,7 @@ export default function Dashboard() {
 
       </Card>
       )}
+      </div>
 
     </div>
   );

@@ -31,15 +31,18 @@ export default function Profile() {
     queryFn: profileApi.get,
   });
 
-  const { data: deposits = [] } = useQuery<Deposit[]>({
+  const { data: depositsRes } = useQuery({
     queryKey: ['deposits'],
-    queryFn: async () => (await depositsApi.getAll()).data,
+    queryFn: depositsApi.getAll,
   });
 
-  const { data: withdrawals = [] } = useQuery<Withdrawal[]>({
+  const { data: withdrawalsRes } = useQuery({
     queryKey: ['withdrawals'],
-    queryFn: async () => (await withdrawalsApi.getAll()).data,
+    queryFn: withdrawalsApi.getAll,
   });
+
+  const deposits: Deposit[] = Array.isArray(depositsRes?.data) ? depositsRes.data : [];
+  const withdrawals: Withdrawal[] = Array.isArray(withdrawalsRes?.data) ? withdrawalsRes.data : [];
 
   const {
     register,
