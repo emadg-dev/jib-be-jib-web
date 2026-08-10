@@ -7,7 +7,6 @@ export interface User {
 
 export interface Member { 
   id: string; 
-  trip_id: string;
   name: string; 
   role: string; 
   created_at: string; 
