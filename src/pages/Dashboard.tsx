@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { dashboardApi } from '../api/services';
+import { dashboardApi, withdrawalsApi } from '../api/services';
 import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td } from '../components/ui/core';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { ArrowRight, Wallet, TrendingUp, TrendingDown, Users, DollarSign, LayoutGrid, List } from 'lucide-react';
@@ -7,6 +7,7 @@ import { usePreferences } from '../contexts/PreferencesContext';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { DashboardSkeleton } from '../components/Skeleton';
+import ExpenseTimeline from '../components/ExpenseTimeline';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -47,6 +48,11 @@ export default function Dashboard() {
   const { data: res, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
     queryFn: dashboardApi.get
+  });
+
+  const { data: withdrawalsRes, isLoading: isLoadingWithdrawals } = useQuery({
+    queryKey: ['withdrawals'],
+    queryFn: withdrawalsApi.getAll,
   });
 
   if (isLoading) return <DashboardSkeleton />;
@@ -309,6 +315,12 @@ export default function Dashboard() {
         </Card>
 
       </div>
+
+
+      <ExpenseTimeline
+        withdrawals={withdrawalsRes?.data}
+        loading={isLoadingWithdrawals}
+      />
 
 
       <Card className="shadow-sm">
