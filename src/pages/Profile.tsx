@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileApi } from '../api/services';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Label } from '../components/ui/core';
 import { useForm } from 'react-hook-form';
@@ -21,6 +21,7 @@ export default function Profile() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   const { data: profile } = useQuery({
     queryKey: ['profile'],
@@ -55,13 +56,15 @@ export default function Profile() {
   const avatarMutation = useMutation({
     mutationFn: profileApi.uploadAvatar,
     onSuccess: (res: any) => {
-      debugger
       const avatarUrl = res?.data?.avatar;
       if (avatarUrl) {
         updateUser({ avatar: avatarUrl });
-        setAvatarPreview(null);
-        setSuccessMessage(fa ? 'تصویر پروفایل آپلود شد' : 'Profile picture updated');
+      } else {
+        updateUser({ avatar: undefined });
       }
+      setAvatarPreview(null);
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      setSuccessMessage(fa ? 'تصویر پروفایل بروزرسانی شد' : 'Profile picture updated');
     },
     onError: (error: any) => {
       const rawMessage = error?.message || 'Error uploading avatar';
@@ -72,7 +75,6 @@ export default function Profile() {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    debugger
     try {
       const processed = await processAvatar(file, 256, 0.85);
       setAvatarPreview(processed);
@@ -94,12 +96,9 @@ export default function Profile() {
     }
   };
 
-  const handleRemoveAvatar = async () => {
+  const handleRemoveAvatar = () => {
     setAvatarPreview(null);
-    updateUser({ avatar: undefined });
-    try {
-      await avatarMutation.mutateAsync({ avatar: '' });
-    } catch { /* optimistic UI already applied */ }
+    avatarMutation.mutate({ avatar: '' });
   };
 
   const onSubmit = (data: { current_password: string; new_password: string; confirm_password: string }) => {
@@ -147,7 +146,11 @@ export default function Profile() {
                   <Avatar src={displayAvatar} name={displayProfile?.display_name || user?.name} size={80} className="ring-4 ring-background shadow-lg" />
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute -end-1 -bottom-1 grid h-8 w-8 place-items-center rounded-full bg-indigo-600 text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100"
+                    className={`absolute -end-1 -bottom-1 grid h-8 w-8 place-items-center rounded-full bg-indigo-600 text-white shadow-md transition-opacity ${
+                      displayAvatar
+                        ? 'opacity-0 group-hover:opacity-100'
+                        : 'opacity-100'
+                    }`}
                     title={fa ? 'تغییر تصویر' : 'Change photo'}
                   >
                     <Camera size={14} />
