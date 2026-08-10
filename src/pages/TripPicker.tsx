@@ -25,6 +25,7 @@ export default function TripPicker() {
     deleteTrip,
     logout,
     isOwner,
+    isAdmin,
   } = useAuth();
 
   const { language } = usePreferences();
@@ -196,7 +197,7 @@ export default function TripPicker() {
               <p className="mt-1 text-sm text-muted-foreground">
                 {trip.currency}
                 {' • '}
-                {trip.role === 'owner'
+                {trip.role === 'owner' 
                   ? fa ? 'مدیر' : 'Owner'
                   : fa ? 'عضو' : 'Member'}
               </p>
@@ -204,7 +205,7 @@ export default function TripPicker() {
                 <Button onClick={() => choose(trip.id)} disabled={busy}>
                   {fa ? 'ورود به سفر' : 'Open trip'}
                 </Button>
-                {trip.role === 'owner' && (
+                {(trip.role === 'owner' || isAdmin) && (
                   <>
                     <Button
                       variant="outline"

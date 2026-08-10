@@ -294,7 +294,7 @@ export default function Members() {
                            <Button variant="secondary" onClick={() => { editMember(m); setShowForm(true); }}>
                             <Pencil size={16} />{fa ? 'ویرایش' : 'Edit'}
                           </Button>
-                          {m.role !== 'owner' && (
+                           {isOwner && (m.role !== 'owner' || user?.role === 'admin') && (
                             <Button
                               variant="destructive"
                               loading={deletingId === m.id}
@@ -345,7 +345,7 @@ export default function Members() {
                          <Button variant="outline" size="sm" onClick={() => { editMember(m); setShowForm(true); }}>
                           <Pencil size={14} className="me-1" />{fa ? 'ویرایش' : 'Edit'}
                         </Button>
-                        {m.role !== 'owner' && (
+                        {(m.role !== 'owner' || user?.role === 'admin') && (
                           <Button
                             variant="destructive"
                             size="sm"

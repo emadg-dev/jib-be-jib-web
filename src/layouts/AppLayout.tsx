@@ -13,11 +13,11 @@ export default function AppLayout() {
   const fa = language === 'fa';
   useEffect(() => { const show = () => setPermissionNotice(true); window.addEventListener('owner-permission-required', show); return () => window.removeEventListener('owner-permission-required', show); }, []);
   const nav = [
-    { name: fa ? 'داشبورد' : 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['owner', 'member'] },
-    { name: fa ? 'اعضا' : 'Members', path: '/members', icon: Users, roles: ['owner'] },
-    { name: fa ? 'واریزها' : 'Deposits', path: '/deposits', icon: ArrowDownToLine, roles: ['owner', 'member'] },
-    { name: fa ? 'هزینه‌ها' : 'Expenses', path: '/withdrawals', icon: ArrowUpFromLine, roles: ['owner', 'member'] },
-    { name: fa ? 'سفرها' : 'Trips', path: '/trips', icon: Map, roles: ['owner', 'member'] },
+    { name: fa ? 'داشبورد' : 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'owner', 'member'] },
+    { name: fa ? 'اعضا' : 'Members', path: '/members', icon: Users, roles: ['admin', 'owner'] },
+    { name: fa ? 'واریزها' : 'Deposits', path: '/deposits', icon: ArrowDownToLine, roles: ['admin', 'owner', 'member'] },
+    { name: fa ? 'هزینه‌ها' : 'Expenses', path: '/withdrawals', icon: ArrowUpFromLine, roles: ['admin', 'owner', 'member'] },
+    { name: fa ? 'سفرها' : 'Trips', path: '/trips', icon: Map, roles: ['admin', 'owner', 'member'] },
   ];
   const controls = { language, theme, toggleLanguage, toggleTheme, logout, fa };
 

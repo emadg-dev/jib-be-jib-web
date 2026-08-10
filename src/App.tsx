@@ -64,7 +64,7 @@ const AppRoutes = () => {
       <Route index element={<Navigate to="/dashboard" replace />} />
       <Route path="trips" element={<TripPicker />} />
       <Route path="dashboard" element={<Dashboard />} />
-      <Route path="members"element={<RoleRoute roles={['owner']}><Members /></RoleRoute>}/>
+      <Route path="members"element={<RoleRoute roles={['admin', 'owner']}><Members /></RoleRoute>}/>
       <Route path="deposits" element={<Deposits />} />
       <Route path="withdrawals" element={<Withdrawals />} />
       <Route path="profile" element={<Profile />} />
