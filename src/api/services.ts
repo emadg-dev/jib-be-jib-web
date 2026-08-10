@@ -38,4 +38,5 @@ export const profileApi = {
   changePassword: (data: { current_password: string; new_password: string }) => apiClient.put('/profile/password', data),
   updatePreferences: (data: Record<string, boolean>) => apiClient.put('/profile/preferences', data),
   uploadAvatar: (data: { avatar: string }) => apiClient.put('/profile/avatar', data),
+  updateDisplayName: (data: { display_name: string }) => apiClient.put('/profile', data),
 };
