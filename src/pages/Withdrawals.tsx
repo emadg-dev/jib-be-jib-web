@@ -1,6 +1,7 @@
 import { useState, type SetStateAction } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LayoutGrid, List, Plus } from 'lucide-react';
+import Avatar from '../components/Avatar';
 
 import {
   withdrawalsApi,
@@ -605,7 +606,8 @@ export default function Withdrawals() {
                     {w.beneficiaries.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {w.beneficiaries.map((b) => (
-                          <span key={b.member_id} className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${b.member_id === user?.id ? 'bg-primary/20 text-primary font-medium' : 'bg-muted text-muted-foreground'}`}>
+                          <span key={b.member_id} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${b.member_id === user?.id ? 'bg-primary/20 text-primary font-medium' : 'bg-muted text-muted-foreground'}`}>
+                            <Avatar src={b.member_avatar} name={b.member_display_name || b.member_name} size={16} />
                             {b.member_display_name || b.member_name}
                           </span>
                         ))}

@@ -14,6 +14,7 @@ import { usePreferences } from '../contexts/PreferencesContext';
 import { gregorianToJalali } from '../utils/jalaali';
 import type { Withdrawal } from '../api/services';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/core';
+import Avatar from './Avatar';
 
 const CATEGORY_FA: Record<string, string> = {
   Food: 'غذا',
@@ -177,9 +178,7 @@ export default function ExpenseTimeline({
                                         key={b.member_id}
                                         className="inline-flex items-center gap-1 rounded-full bg-white/70 py-0.5 pe-2 ps-1 text-[11px] text-gray-600"
                                       >
-                                        <span className="grid h-4 w-4 place-items-center rounded-full bg-indigo-100 text-[9px] font-bold text-indigo-700">
-                                          {name.charAt(0)}
-                                        </span>
+                                        <Avatar src={b.member_avatar} name={name} size={16} />
                                         {name}
                                       </span>
                                     );

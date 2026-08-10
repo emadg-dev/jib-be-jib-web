@@ -8,6 +8,7 @@ import { useConfirm } from '../components/ConfirmDialog';
 import { useState } from 'react';
 import { Eye, EyeOff, Pencil, LayoutGrid, List, Plus } from 'lucide-react';
 import { PageSkeleton } from '../components/Skeleton';
+import Avatar from '../components/Avatar';
 
 export default function Members() {
   const { language } = usePreferences();
@@ -282,7 +283,12 @@ export default function Members() {
                   const isCurrentUser = user?.id === m.id;
                   return (
                     <Tr key={m.id} className={isCurrentUser ? 'bg-primary/5 border-l-4 border-l-primary' : ''}>
-                      <Td className="font-medium">{m.display_name || m.name}</Td>
+                      <Td className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Avatar src={m.avatar} name={m.display_name || m.name} size={28} />
+                          {m.display_name || m.name}
+                        </div>
+                      </Td>
                       <Td className="text-slate-500">{m.name}</Td>
                       <Td className="capitalize">
                         {m.role}{m.active === false && <span className="ms-2 text-xs text-amber-600">{fa ? 'غیرفعال' : 'Inactive'}</span>}
@@ -324,9 +330,12 @@ export default function Members() {
                 return (
                   <div key={m.id} className={`rounded-xl border bg-card/60 p-4 shadow-sm ${isCurrentUser ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}>
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-foreground">{m.display_name || m.name}</p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">@{m.name}</p>
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <Avatar src={m.avatar} name={m.display_name || m.name} size={36} />
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-foreground">{m.display_name || m.name}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">@{m.name}</p>
+                        </div>
                       </div>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${m.role === 'owner' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
                         {m.role === 'owner' ? (fa ? 'مدیر' : 'Owner') : (fa ? 'عضو' : 'Member')}

@@ -8,6 +8,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { DashboardSkeleton } from '../components/Skeleton';
 import ExpenseTimeline from '../components/ExpenseTimeline';
+import Avatar from '../components/Avatar';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -270,7 +271,12 @@ export default function Dashboard() {
                   const isCurrentUser = user?.id === m.member_id;
                   return (
                     <Tr key={m.member_id} className={isCurrentUser ? 'bg-primary/5 border-l-4 border-l-primary' : ''}>
-                      <Td className="font-medium text-gray-900">{m.display_name || m.name}</Td>
+                      <Td className="font-medium text-gray-900">
+                        <div className="flex items-center gap-2">
+                          <Avatar src={m.avatar} name={m.display_name || m.name} size={28} />
+                          {m.display_name || m.name}
+                        </div>
+                      </Td>
                       <Td className="text-green-600 font-semibold">{fmt(m.total_deposited)}</Td>
                       <Td className="text-red-600 font-semibold">{fmt(m.total_expenses)}</Td>
                       <Td className={`font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
@@ -288,7 +294,10 @@ export default function Dashboard() {
                 return (
                   <div key={m.member_id} className={`rounded-xl border bg-card/60 p-4 shadow-sm ${isCurrentUser ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}>
                     <div className="flex items-center justify-between">
-                      <p className="truncate font-semibold text-foreground">{m.display_name || m.name}</p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Avatar src={m.avatar} name={m.display_name || m.name} size={28} />
+                        <p className="truncate font-semibold text-foreground">{m.display_name || m.name}</p>
+                      </div>
                       <span className={`text-sm font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
                         {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
                       </span>
