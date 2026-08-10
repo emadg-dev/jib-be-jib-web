@@ -79,17 +79,17 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TripDataReset />
-      <PreferencesProvider>
-        <ConfirmProvider>
-          <UpdatePrompt />
-          <AddToHomeScreen />
-          <AuthProvider>
+      <AuthProvider>
+        <PreferencesProvider>
+          <ConfirmProvider>
+            <UpdatePrompt />
+            <AddToHomeScreen />
             <BrowserRouter>
               <AppRoutes />
             </BrowserRouter>
-          </AuthProvider>
-        </ConfirmProvider>
-      </PreferencesProvider>
+          </ConfirmProvider>
+        </PreferencesProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
