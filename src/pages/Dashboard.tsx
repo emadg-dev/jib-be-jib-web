@@ -279,8 +279,10 @@ export default function Dashboard() {
                       </Td>
                       <Td className="text-green-600 font-semibold">{fmt(m.total_deposited)}</Td>
                       <Td className="text-red-600 font-semibold">{fmt(m.total_expenses)}</Td>
-                      <Td className={`font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
-                        {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
+                      <Td className={`font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}` }>
+                        <div  dir='ltr'>
+                          {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
+                          </div>
                       </Td>
                     </Tr>
                   );
@@ -298,7 +300,7 @@ export default function Dashboard() {
                         <Avatar src={m.avatar} name={m.display_name || m.name} size={28} />
                         <p className="truncate font-semibold text-foreground">{m.display_name || m.name}</p>
                       </div>
-                      <span className={`text-sm font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
+                      <span className={`text-sm font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}  dir='ltr'>
                         {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
                       </span>
                     </div>
