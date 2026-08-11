@@ -356,7 +356,7 @@ export default function Profile() {
               <Wallet size={24} className="text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">{fa ? 'مانده نهایی' : 'Final Balance'}</p>
-                <p className={`text-2xl font-bold ${chartData.balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                <p dir="ltr" className={`text-2xl font-bold ${chartData.balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                   {fmt(chartData.balance)}
                 </p>
               </div>

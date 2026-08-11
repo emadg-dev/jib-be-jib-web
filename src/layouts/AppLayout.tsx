@@ -1,7 +1,9 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { dashboardApi } from '../api/services';
 import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, LogOut, Languages, Moon, Sun, Map, User } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
@@ -95,16 +97,30 @@ function BottomDock({ nav, pathname }: { nav: any[]; pathname: string }) {
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
+  const { user } = useAuth();
+  const { language } = usePreferences();
+  const { data: dashRes } = useQuery({ queryKey: ['dashboard'], queryFn: dashboardApi.get, enabled: !!user });
+  const myBalance = dashRes?.data?.members?.find((m: any) => m.member_id === user?.id)?.balance;
+  const fmt = (v: number) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
   return (
     <div className={compact ? 'flex items-center gap-2 text-lg font-bold text-slate-900' : 'flex items-center gap-3 px-7 py-8 text-xl font-bold text-slate-900'}>
-      <span className="grid pt-1 place-items-center">
+      <span className="grid place-items-center">
         <img
           src="/jbj_icon.webp"
           alt="Jib-be-Jib logo"
           className="object-contain h-10"
         />
       </span>
-      {/* <span>{fa ? 'جیب‌به‌جیب' : 'Jib-be-Jib'}</span> */}
+      <div >
+      <p className="text-xs text-muted-foreground">{language == "fa" ? 'مانده شما' : 'Your Balance'}</p>
+
+      {myBalance !== undefined && (
+        <span dir="ltr" className={`text-sm font-semibold whitespace-nowrap ${myBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+          {myBalance >= 0 ? '+' : ''}{fmt(myBalance)}
+        </span>
+      )}
+      </div>
     </div>
   );
 }
