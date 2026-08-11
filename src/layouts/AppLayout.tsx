@@ -95,12 +95,11 @@ function BottomDock({ nav, pathname }: { nav: any[]; pathname: string }) {
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
-  const { theme } = usePreferences();
   return (
     <div className={compact ? 'flex items-center gap-2 text-lg font-bold text-slate-900' : 'flex items-center gap-3 px-7 py-8 text-xl font-bold text-slate-900'}>
       <span className="grid pt-1 place-items-center">
         <img
-          src={theme === 'light' ? "/jbj_header.webp" : "/jbj_header.webp"}
+          src="/jbj_icon.webp"
           alt="Jib-be-Jib logo"
           className="object-contain h-10"
         />
