@@ -5,7 +5,7 @@ import { Settings as SettingsIcon, Send, Save, Bell, SlidersHorizontal } from 'l
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { notificationsApi, type TelegramEventKey, type TelegramSettings } from '../api/services';
-import { Card, CardContent, CardHeader, CardTitle, Button, Input, Label, Checkbox } from '../components/ui/core';
+import { Card, CardContent, CardHeader, CardTitle, Button, Input, Textarea, Label, Checkbox } from '../components/ui/core';
 import { CardSkeleton } from '../components/Skeleton';
 import { translateError } from '../utils/translations';
 
@@ -22,7 +22,7 @@ const TEMPLATE_HINTS: Partial<Record<TelegramEventKey, string>> = {
   trip_updated: '{trip_name}',
   member_added: '{member_name}',
   deposit_created: '{member_name}, {amount}',
-  expense_created: '{description}, {category}, {amount}',
+  expense_created: '{description}, {category}, {amount}, {benefactors}',
 };
 
 const DEFAULT_TEMPLATES: Record<TelegramEventKey, string> = {
@@ -334,9 +334,10 @@ function NotificationsTab({ onSuccess, onError }: { onSuccess: (m: string) => vo
                         </Checkbox>
                       </div>
                       <div className="mt-3">
-                        <Input
+                        <Textarea
                           dir="ltr"
                           value={current.message}
+                          rows={3}
                           onChange={(e: { target: { value: string } }) => updateEvent(key, { message: e.target.value })}
                         />
                         <p className="mt-1.5 text-xs text-muted-foreground">

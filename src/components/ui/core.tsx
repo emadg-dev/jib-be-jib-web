@@ -180,6 +180,52 @@ export const Input = React.forwardRef<HTMLInputElement, any>(
 
 Input.displayName = 'Input';
 
+export const Textarea = React.forwardRef<HTMLTextAreaElement, any>(
+  ({ className = '', ...props }, ref) => (
+    <textarea
+      ref={ref}
+      className={`
+        flex
+        min-h-[80px]
+        w-full
+        rounded-xl
+
+        border
+        border-input
+
+        bg-background
+        px-3.5
+        py-2
+
+        text-base
+        text-foreground
+
+        placeholder:text-muted-foreground/70
+
+        shadow-sm
+        outline-none
+        transition
+
+        hover:border-ring/40
+
+        focus:border-ring
+        focus:ring-4
+        focus:ring-ring/20
+
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+
+        resize-y
+
+        ${className}
+      `}
+      {...props}
+    />
+  )
+);
+
+Textarea.displayName = 'Textarea';
+
 export const Label = React.forwardRef<HTMLLabelElement, any>(
   ({ className = '', children, ...props }, ref) => (
     <label
