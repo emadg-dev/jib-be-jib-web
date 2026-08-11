@@ -9,6 +9,9 @@ export interface Beneficiary { withdrawal_id: string; member_id: string; member_
 export interface Withdrawal { id: string; trip_id: string; description: string; category: string; amount: number; date?: string; created_at: string; beneficiaries: Beneficiary[]; }
 export interface Settlement { from: string; fromName: string; to: string; toName: string; amount: number; }
 export interface DashboardData { currentBankBalance: number; totalDeposits: number; totalWithdrawals: number; members: { member_id: string; name: string; display_name?: string; avatar?: string; total_deposited: number; total_expenses: number; balance: number; }[]; categories: { category: string; total: number; }[]; settlements: Settlement[]; }
+export interface TelegramEventSetting { enabled: boolean; message: string; }
+export interface TelegramSettings { telegram_enabled: boolean; telegram_chat_id?: string; events: Record<string, TelegramEventSetting>; }
+export type TelegramEventKey = 'trip_created' | 'trip_updated' | 'member_added' | 'deposit_created' | 'expense_created';
 
 export const authApi = {
   login: (data: { name: string; password: string }) => apiClient.post<SessionResponse>('/auth/login', data),
@@ -39,4 +42,9 @@ export const profileApi = {
   updatePreferences: (data: Record<string, string | boolean>) => apiClient.put('/profile/preferences', data),
   uploadAvatar: (data: { avatar: string }) => apiClient.put('/profile/avatar', data),
   updateDisplayName: (data: { display_name: string }) => apiClient.put('/profile', data),
+};
+export const notificationsApi = {
+  getSettings: () => apiClient.get<TelegramSettings>('/notifications/settings'),
+  updateSettings: (data: { telegram_enabled: boolean; telegram_chat_id?: string; events?: Record<string, Partial<TelegramEventSetting>> }) => apiClient.put('/notifications/settings', data),
+  sendTest: (data: { chat_id: string; title?: string; message: string }) => apiClient.post<{ delivered: boolean }>('/notifications/telegram/test', data),
 };

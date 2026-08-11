@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { dashboardApi } from '../api/services';
-import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, LogOut, Languages, Moon, Sun, Map, User } from 'lucide-react';
+import { LayoutDashboard, Users, ArrowDownToLine, ArrowUpFromLine, LogOut, Languages, Moon, Sun, Map, User, Settings } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
 export default function AppLayout() {
@@ -20,6 +20,7 @@ export default function AppLayout() {
     { name: fa ? 'واریزها' : 'Deposits', path: '/deposits', icon: ArrowDownToLine, roles: ['admin', 'owner', 'member'] },
     { name: fa ? 'هزینه‌ها' : 'Expenses', path: '/withdrawals', icon: ArrowUpFromLine, roles: ['admin', 'owner', 'member'] },
     { name: fa ? 'سفرها' : 'Trips', path: '/trips', icon: Map, roles: ['admin', 'owner', 'member'] },
+    { name: fa ? 'تنظیمات' : 'Settings', path: '/settings', icon: Settings, roles: ['admin', 'owner'] },
   ];
   const controls = { language, theme, toggleLanguage, toggleTheme, logout, fa };
 
