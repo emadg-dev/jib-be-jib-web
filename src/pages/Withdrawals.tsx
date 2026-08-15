@@ -62,6 +62,7 @@ export default function Withdrawals() {
   const [category, setCategory] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(() => new Date().toISOString().slice(0,10));
+  const [paidBy, setPaidBy] = useState<string>('');
   const [selected, setSelected] = useState<string[]>([]);
   const [shares, setShares] = useState<Shares>({});
   const [editing, setEditing] = useState<Withdrawal | null>(null);
@@ -89,6 +90,7 @@ export default function Withdrawals() {
     setCategory('');
     setAmount('');
     setDate(new Date().toISOString().slice(0,10));
+    setPaidBy('');
     setSelected([]);
     setShares({});
     setEditing(null);
@@ -185,6 +187,7 @@ export default function Withdrawals() {
       description,
       category,
       amount: total,
+      paid_by: paidBy || null,
       beneficiaries,
       date
     };
@@ -251,6 +254,7 @@ export default function Withdrawals() {
     setCategory(withdrawal.category);
     setAmount(formatAmount(String(withdrawal.amount)));
     setDate(withdrawal.date ? withdrawal.date.slice(0,10) : withdrawal.created_at.slice(0,10));
+    setPaidBy(withdrawal.paid_by || '');
 
     const sel = withdrawal.beneficiaries.map(
       (beneficiary) => beneficiary.member_id
@@ -392,6 +396,33 @@ export default function Withdrawals() {
                     {fa ? 'تاریخ' : 'Date'}
                   </Label>
                   <JalaliDatePicker id="withdrawal-date" value={date} onChange={(iso: string) => setDate(iso)} />
+                </div>
+
+                <div>
+                  <Label htmlFor="withdrawal-paid-by">
+                    {fa ? 'پرداخت توسط' : 'Paid by'}
+                  </Label>
+                  <Select
+                    id="withdrawal-paid-by"
+                    value={paidBy}
+                    onChange={(event: { target: { value: SetStateAction<string>; }; }) =>
+                      setPaidBy(event.target.value)
+                    }
+                  >
+                    <option value="">
+                      {fa ? 'بانک (پیش‌فرض)' : 'Bank (default)'}
+                    </option>
+                    {active.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.display_name || member.name}
+                      </option>
+                    ))}
+                  </Select>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {paidBy
+                      ? (fa ? 'مبلغ توسط این عضو پرداخت شده و بانک به او بدهکار است.' : 'Paid by this member — bank owes them this amount.')
+                      : (fa ? 'هزینه از حساب بانک پرداخت شده.' : 'Expense paid from the bank.')}
+                  </p>
                 </div>
               </div>
 
@@ -548,6 +579,7 @@ export default function Withdrawals() {
                   <Th>{fa ? 'دسته‌بندی' : 'Category'}</Th>
                   <Th>{fa ? 'بین چه کسانی تقسیم شده' : 'Split among'}</Th>
                   <Th>{fa ? 'مبلغ' : 'Amount'}</Th>
+                  <Th>{fa ? 'پرداخت توسط' : 'Paid by'}</Th>
                   {isOwner && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
                 </Tr>
               </Thead>
@@ -561,6 +593,7 @@ export default function Withdrawals() {
                       <Td>{categories.find((c) => c.value === w.category)?.label || w.category}</Td>
                       <Td>{w.beneficiaries.map((b) => b.member_display_name || b.member_name).join(', ')}</Td>
                       <Td className="font-medium text-red-600">{fmt(w.amount)}</Td>
+                      <Td className="text-xs text-muted-foreground">{w.paid_by_name || (fa ? 'بانک' : 'Bank')}</Td>
                     {isOwner && (
                       <Td>
                         <div className="flex gap-2">
@@ -603,6 +636,11 @@ export default function Withdrawals() {
                       </div>
                       <span className="shrink-0 text-sm font-bold text-red-600">{fmt(w.amount)}</span>
                     </div>
+                    {w.paid_by_name && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {fa ? 'پرداخت توسط:' : 'Paid by:'} {w.paid_by_name}
+                      </p>
+                    )}
                     {w.beneficiaries.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {w.beneficiaries.map((b) => (
