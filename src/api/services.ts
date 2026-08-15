@@ -12,7 +12,7 @@ export interface SettlementRecord { id: string; trip_id: string; member_id: stri
 export interface DashboardData { currentBankBalance: number; totalDeposits: number; totalWithdrawals: number; totalMemberPaid: number; totalSettled: number; members: { member_id: string; name: string; display_name?: string; avatar?: string; total_deposited: number; total_expenses: number; balance: number; }[]; categories: { category: string; total: number; }[]; settlements: Settlement[]; }
 export interface TelegramEventSetting { enabled: boolean; message: string; }
 export interface TelegramSettings { telegram_enabled: boolean; telegram_chat_id?: string; events: Record<string, TelegramEventSetting>; }
-export type TelegramEventKey = 'trip_created' | 'trip_updated' | 'member_added' | 'deposit_created' | 'expense_created';
+export type TelegramEventKey = 'trip_created' | 'trip_updated' | 'member_added' | 'deposit_created' | 'expense_created' | 'rating_submitted' | 'settlement_recorded' | 'members_report' | 'bank_stats_report' | 'settlements_report' | 'ratings_report';
 
 export interface Ratee {
   id: string;
@@ -89,6 +89,11 @@ export const notificationsApi = {
   getSettings: () => apiClient.get<TelegramSettings>('/notifications/settings'),
   updateSettings: (data: { telegram_enabled: boolean; telegram_chat_id?: string; events?: Record<string, Partial<TelegramEventSetting>> }) => apiClient.put('/notifications/settings', data),
   sendTest: (data: { chat_id: string; title?: string; message: string }) => apiClient.post<{ delivered: boolean }>('/notifications/telegram/test', data),
+  sendCustom: (data: { message: string }) => apiClient.post<{ delivered: boolean }>('/notifications/telegram/send', data),
+  sendMembers: () => apiClient.post<{ delivered: boolean }>('/notifications/telegram/members'),
+  sendBankStats: () => apiClient.post<{ delivered: boolean }>('/notifications/telegram/bank-stats'),
+  sendSettlements: () => apiClient.post<{ delivered: boolean }>('/notifications/telegram/settlements'),
+  sendRatings: () => apiClient.post<{ delivered: boolean }>('/notifications/telegram/ratings'),
 };
 
 export const ratingsApi = {

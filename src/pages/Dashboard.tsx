@@ -1,8 +1,8 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { dashboardApi, withdrawalsApi, depositsApi, profileApi, ratingsApi } from '../api/services';
-import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td, Button } from '../components/ui/core';
+import { useQuery, useMutation} from '@tanstack/react-query';
+import { dashboardApi, withdrawalsApi, depositsApi, profileApi, ratingsApi, notificationsApi } from '../api/services';
+import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td, Button} from '../components/ui/core';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Wallet, TrendingUp, TrendingDown, Users, LayoutGrid, List, SlidersHorizontal, Star, Banknote } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Users, LayoutGrid, List, SlidersHorizontal, Star, Banknote, Send } from 'lucide-react';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -100,6 +100,49 @@ export default function Dashboard() {
     queryFn: ratingsApi.getResults,
   });
 
+  const { data: tgSettingsRes } = useQuery({
+    queryKey: ['notifications', 'settings'],
+    queryFn: notificationsApi.getSettings,
+  });
+
+  // const queryClient = useQueryClient();
+  const tgEnabled = tgSettingsRes?.data?.telegram_enabled === true;
+  const [customMessageOpen, setCustomMessageOpen] = useState(false);
+  const [customMessage, setCustomMessage] = useState('');
+  const customMessageRef = useRef<HTMLTextAreaElement>(null);
+
+  const sendMutation = useMutation({
+    mutationFn: (msg: string) => notificationsApi.sendCustom({ message: msg }),
+    onSuccess: () => {
+      setCustomMessageOpen(false);
+      setCustomMessage('');
+    },
+  });
+
+  const sendMembersMutation = useMutation({
+    mutationFn: notificationsApi.sendMembers,
+  });
+
+  const sendBankStatsMutation = useMutation({
+    mutationFn: notificationsApi.sendBankStats,
+  });
+
+  const sendSettlementsMutation = useMutation({
+    mutationFn: notificationsApi.sendSettlements,
+  });
+
+  const sendRatingsMutation = useMutation({
+    mutationFn: notificationsApi.sendRatings,
+  });
+
+  const isSending = sendMutation.isPending || sendMembersMutation.isPending || sendBankStatsMutation.isPending || sendSettlementsMutation.isPending || sendRatingsMutation.isPending;
+
+  useEffect(() => {
+    if (customMessageOpen && customMessageRef.current) {
+      customMessageRef.current.focus();
+    }
+  }, [customMessageOpen]);
+
   const navigate = useNavigate();
 
   if (isLoading) return <DashboardSkeleton />;
@@ -132,7 +175,19 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="relative" ref={menuRef}>
+        <div className="flex items-center gap-2">
+          {tgEnabled && (
+            <button
+              onClick={() => setCustomMessageOpen(true)}
+              disabled={isSending}
+              className="grid h-10 w-10 place-items-center rounded-xl bg-[#229ED9] text-white shadow-sm transition hover:bg-[#1a7fb5] disabled:opacity-50"
+              aria-label={fa ? 'ارسال پیام به تلگرام' : 'Send to Telegram'}
+              title={fa ? 'ارسال پیام دلخواه به تلگرام' : 'Send custom message to Telegram'}
+            >
+              <Send size={18} />
+            </button>
+          )}
+          <div className="relative" ref={menuRef}>
           <button
             onClick={() => setCustomizeOpen(!customizeOpen)}
             className="grid h-10 w-10 place-items-center rounded-xl bg-card text-muted-foreground shadow-sm transition hover:bg-accent hover:text-accent-foreground"
@@ -164,12 +219,26 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
 
 
       {isVisible('stats') && (
         <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4 text-center">
+           {tgEnabled && (
+            <div className="col-span-full flex justify-end">
+              <button
+                onClick={() => sendBankStatsMutation.mutate()}
+                disabled={isSending}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-[#229ED9] transition hover:bg-[#229ED9]/10 disabled:opacity-50"
+                title={fa ? 'ارسال آمار بانک به تلگرام' : 'Send bank stats to Telegram'}
+              >
+                <Send size={14} />
+                {fa ? 'ارسال به تلگرام' : 'Send to Telegram'}
+              </button>
+            </div>
+          )}
           <StatCard
             title={fa ? 'موجودی حساب' : 'Bank Balance'}
             value={fmt(data.currentBankBalance)}
@@ -187,11 +256,14 @@ export default function Dashboard() {
             icon={<TrendingDown className="w-5 h-5 text-red-600" />}
             valueClassName="text-red-600"
           />
-          <StatCard
+          {data.totalSettled <= 0 && (
+
+            <StatCard
             title={fa ? 'اعضای فعال' : 'Active Members'}
             value={String(data.members.length)}
             icon={<Users className="w-5 h-5 text-blue-600" />}
-          />
+            />
+          )}
           {data.totalSettled > 0 && (
             <StatCard
               title={fa ? 'تسویه شده' : 'Settled'}
@@ -200,8 +272,10 @@ export default function Dashboard() {
               valueClassName="text-emerald-600"
             />
           )}
+         
         </div>
       )}
+      
 
 {isVisible('ratings') && (() => {
         const ratingsStatus = ratingsStatusRes?.data || [];
@@ -218,11 +292,24 @@ export default function Dashboard() {
                   <Star size={20} className="text-amber-500" />
                   {fa ? 'ارزیابی اعضا' : 'Member Ratings'}
                 </CardTitle>
-                {hasNotSubmitted && (
-                  <Button variant="secondary" onClick={() => navigate('/ratings')}>
-                    {fa ? 'ارزیابی کنید' : 'Rate now'}
-                  </Button>
-                )}
+                <div className="flex items-center gap-1">
+                  {tgEnabled && (
+                    <button
+                      onClick={() => sendRatingsMutation.mutate()}
+                      disabled={isSending}
+                      className="rounded-lg p-2 text-[#229ED9] transition hover:bg-[#229ED9]/10 disabled:opacity-50"
+                      aria-label={fa ? 'ارسال به تلگرام' : 'Send to Telegram'}
+                      title={fa ? 'ارسال نتایج ارزیابی به تلگرام' : 'Send ratings to Telegram'}
+                    >
+                      <Send size={16} />
+                    </button>
+                  )}
+                  {hasNotSubmitted && (
+                    <Button variant="secondary" onClick={() => navigate('/ratings')}>
+                      {fa ? 'ارزیابی کنید' : 'Rate now'}
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -237,11 +324,11 @@ export default function Dashboard() {
               )}
 
               {ratingsResults.length > 0 ? (
-                <div dir="ltr" className="h-[300px]">
+                <div dir="ltr" style={{ height: Math.max(300, ratingsResults.length * 40) }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={ratingsResults}>
-                      <XAxis dataKey="display_name" />
-                      <YAxis domain={[0, 15]} />
+                    <BarChart data={ratingsResults} layout="vertical" margin={{ left: 20 }}>
+                      <XAxis type="number" domain={[0, 15]} />
+                      <YAxis type="category" dataKey="display_name" width={120} tick={{ fontSize: 12 }} />
                       <Tooltip
                         formatter={(val: any, name: string) => {
                           const labels: Record<string, { en: string; fa: string }> = {
@@ -264,7 +351,7 @@ export default function Dashboard() {
                       />
                       <Bar dataKey="ethics_avg" stackId="ratings" fill="#6366f1" radius={[0, 0, 0, 0]} />
                       <Bar dataKey="participation_avg" stackId="ratings" fill="#06b6d4" radius={[0, 0, 0, 0]} />
-                      <Bar dataKey="flexibility_avg" stackId="ratings" fill="#10b981" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="flexibility_avg" stackId="ratings" fill="#10b981" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -287,7 +374,18 @@ export default function Dashboard() {
               <CardTitle className="text-lg font-semibold">
                 {fa ? 'وضعیت حساب اعضا' : 'Member Financial Breakdown'}
               </CardTitle>
-              <div className="flex gap-1">
+              <div className="flex items-center gap-1">
+                {tgEnabled && (
+                  <button
+                    onClick={() => sendMembersMutation.mutate()}
+                    disabled={isSending}
+                    className="rounded-lg p-2 text-[#229ED9] transition hover:bg-[#229ED9]/10 disabled:opacity-50"
+                    aria-label={fa ? 'ارسال به تلگرام' : 'Send to Telegram'}
+                    title={fa ? 'ارسال جدول اعضا به تلگرام' : 'Send member breakdown to Telegram'}
+                  >
+                    <Send size={16} />
+                  </button>
+                )}
                 <button
                   onClick={() => setMemberView('card')}
                   className={`rounded-lg p-2 transition ${memberView === 'card' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
@@ -465,13 +563,64 @@ export default function Dashboard() {
               />
             )}
             {stVisible && (
-              <SettlementCard settlements={data.settlements} fa={fa} fmt={fmt} />
+              <SettlementCard
+                settlements={data.settlements}
+                fa={fa}
+                fmt={fmt}
+                tgEnabled={tgEnabled}
+                onSendTelegram={() => sendSettlementsMutation.mutate()}
+                isSending={isSending}
+              />
             )}
           </div>
         );
       })()}
 
-      
+      {customMessageOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => { setCustomMessageOpen(false); setCustomMessage(''); }}>
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-foreground mb-1">
+              {fa ? 'ارسال پیام به تلگرام' : 'Send to Telegram'}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              {fa ? 'پیام دلخواه خود را بنویسید و به گروه تلگرام ارسال کنید.' : 'Write a custom message to send to the Telegram group.'}
+            </p>
+            <textarea
+              ref={customMessageRef}
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              rows={5}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#229ED9]/50 resize-none"
+              placeholder={fa ? 'پیام خود را اینجا بنویسید...' : 'Type your message here...'}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && customMessage.trim()) {
+                  sendMutation.mutate(customMessage.trim());
+                }
+              }}
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => { setCustomMessageOpen(false); setCustomMessage(''); }}
+              >
+                {fa ? 'لغو' : 'Cancel'}
+              </Button>
+              <Button
+                onClick={() => {
+                  if (customMessage.trim()) sendMutation.mutate(customMessage.trim());
+                }}
+                loading={sendMutation.isPending}
+                disabled={!customMessage.trim() || sendMutation.isPending}
+                className="bg-[#229ED9] hover:bg-[#1a7fb5] text-white"
+              >
+                <Send size={16} className="me-1.5" />
+                {fa ? 'ارسال' : 'Send'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

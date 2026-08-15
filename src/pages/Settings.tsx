@@ -15,6 +15,12 @@ const TELEGRAM_EVENTS: { key: TelegramEventKey; en: string; fa: string }[] = [
   { key: 'member_added', en: 'Member added', fa: 'عضو اضافه شد' },
   { key: 'deposit_created', en: 'Deposit added', fa: 'واریز ثبت شد' },
   { key: 'expense_created', en: 'Expense added', fa: 'هزینه ثبت شد' },
+  { key: 'rating_submitted', en: 'Rating submitted', fa: 'ارزیابی ثبت شد' },
+  { key: 'settlement_recorded', en: 'Settlement recorded', fa: 'تسویه ثبت شد' },
+  { key: 'members_report', en: 'Members report (send button)', fa: 'گزارش اعضا (دکمه ارسال)' },
+  { key: 'bank_stats_report', en: 'Bank stats report (send button)', fa: 'گزارش وضعیت بانک (دکمه ارسال)' },
+  { key: 'settlements_report', en: 'Settlements report (send button)', fa: 'گزارش تسویه‌ها (دکمه ارسال)' },
+  { key: 'ratings_report', en: 'Ratings report (send button)', fa: 'گزارش ارزیابی‌ها (دکمه ارسال)' },
 ];
 
 const TEMPLATE_HINTS: Partial<Record<TelegramEventKey, string>> = {
@@ -23,6 +29,12 @@ const TEMPLATE_HINTS: Partial<Record<TelegramEventKey, string>> = {
   member_added: '{member_name}',
   deposit_created: '{member_name}, {amount}',
   expense_created: '{description}, {category}, {amount}, {benefactors}',
+  rating_submitted: '',
+  settlement_recorded: '{member_name}, {amount}',
+  members_report: '{members_list}, {bank_balance}',
+  bank_stats_report: '{bank_balance}, {total_deposits}, {total_expenses}, {settled_line}, {member_count}, {creditors_line}, {debtors_line}',
+  settlements_report: '{settlements_list}, {total_settled}, {settlement_count}',
+  ratings_report: '{ratings_list}, {rated_count}',
 };
 
 const DEFAULT_TEMPLATES: Record<TelegramEventKey, string> = {
@@ -31,6 +43,12 @@ const DEFAULT_TEMPLATES: Record<TelegramEventKey, string> = {
   member_added: '{member_name} joined the trip.',
   deposit_created: '{member_name} deposited {amount}.',
   expense_created: 'Expense {description} ({category}) was added for {amount}.',
+  rating_submitted: 'A member has submitted their ratings.',
+  settlement_recorded: '{member_name} settled {amount}.',
+  members_report: '👥 *Member Financial Breakdown*\n━━━━━━━━━━━━━━━━━━━━━━\n\n{members_list}\n\n━━━━━━━━━━━━━━━━━━━━━━\n🏦 Bank Balance: {bank_balance}',
+  bank_stats_report: '🏦 *Bank Stats*\n\n💰 Bank Balance: *{bank_balance}*\n📈 Total Deposits: {total_deposits}\n📉 Total Expenses: {total_expenses}\n{settled_line}\n\n👥 Members: {member_count}\n{creditors_line}\n{debtors_line}',
+  settlements_report: '📋 *Settlements Summary*\n\n{settlements_list}\n\n━━━━━━━━━━━━━━━━━━━━━━\n💰 Total Settled: *{total_settled}*\n📊 {settlement_count} settlement(s) recorded',
+  ratings_report: '⭐ *Member Ratings*\n\n{ratings_list}\n\n━━━━━━━━━━━━━━━━━━━━━━\n📊 {rated_count} member(s) rated',
 };
 
 export default function SettingsPage() {

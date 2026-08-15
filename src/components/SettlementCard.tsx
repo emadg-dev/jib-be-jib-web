@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/core';
-import { DollarSign, ArrowRight } from 'lucide-react';
+import { DollarSign, ArrowRight, Send } from 'lucide-react';
 import type { Settlement } from '../api/services';
 
 const GRADIENTS = [
@@ -14,16 +14,29 @@ const GRADIENTS = [
 const TEXT_COLORS = ['text-indigo-700', 'text-emerald-700', 'text-violet-700', 'text-amber-700', 'text-rose-700', 'text-cyan-700'];
 const ARROW_COLORS = ['text-indigo-500', 'text-emerald-500', 'text-violet-500', 'text-amber-500', 'text-rose-500', 'text-cyan-500'];
 
-type Props = { settlements: Settlement[]; fa: boolean; fmt: (v: number) => string };
+type Props = { settlements: Settlement[]; fa: boolean; fmt: (v: number) => string; tgEnabled?: boolean; onSendTelegram?: () => void; isSending?: boolean };
 
-export default function SettlementCard({ settlements, fa, fmt }: Props) {
+export default function SettlementCard({ settlements, fa, fmt, tgEnabled, onSendTelegram, isSending }: Props) {
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-indigo-600" />
-          {fa ? 'پیشنهاد تسویه حساب' : 'Suggested Settlements'}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-indigo-600" />
+            {fa ? 'پیشنهاد تسویه حساب' : 'Suggested Settlements'}
+          </CardTitle>
+          {tgEnabled && onSendTelegram && (
+            <button
+              onClick={onSendTelegram}
+              disabled={isSending}
+              className="rounded-lg p-2 text-[#229ED9] transition hover:bg-[#229ED9]/10 disabled:opacity-50"
+              aria-label={fa ? 'ارسال به تلگرام' : 'Send to Telegram'}
+              title={fa ? 'ارسال تسویه حساب به تلگرام' : 'Send settlements to Telegram'}
+            >
+              <Send size={16} />
+            </button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {settlements.length === 0 ? (
