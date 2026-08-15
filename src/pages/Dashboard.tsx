@@ -1,8 +1,8 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { dashboardApi, withdrawalsApi, depositsApi, profileApi } from '../api/services';
-import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td } from '../components/ui/core';
+import { dashboardApi, withdrawalsApi, depositsApi, profileApi, ratingsApi } from '../api/services';
+import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td, Button } from '../components/ui/core';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Wallet, TrendingUp, TrendingDown, Users, LayoutGrid, List, SlidersHorizontal } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Users, LayoutGrid, List, SlidersHorizontal, Star } from 'lucide-react';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,10 +12,11 @@ import Avatar from '../components/Avatar';
 import StatCard from '../components/StatCard';
 import SettlementCard from '../components/SettlementCard';
 import BankBalanceChart from '../components/BankBalanceChart';
+import { useNavigate } from 'react-router-dom';
 
 const COLORS = ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-const SECTION_KEYS = ['stats', 'memberBreakdown', 'memberNetExpenses', 'categoryBreakdown', 'timeline', 'settlements', 'balanceChart'] as const;
+const SECTION_KEYS = ['stats', 'memberBreakdown', 'memberNetExpenses', 'categoryBreakdown', 'timeline', 'settlements', 'balanceChart', 'ratings'] as const;
 type SectionKey = typeof SECTION_KEYS[number];
 
 const CATEGORY_FA: Record<string, string> = {
@@ -71,6 +72,7 @@ export default function Dashboard() {
     categoryBreakdown: { en: 'Expenses by Category', fa: 'هزینه‌ها بر اساس دسته‌بندی' },
     timeline: { en: 'Expense Timeline', fa: 'خط زمانی هزینه‌ها' },
     settlements: { en: 'Suggested Settlements', fa: 'پیشنهاد تسویه حساب' },
+    ratings: { en: 'Member Ratings', fa: 'ارزیابی اعضا' },
   };
 
   const { data: res, isLoading, error } = useQuery({
@@ -87,6 +89,18 @@ export default function Dashboard() {
     queryKey: ['deposits'],
     queryFn: depositsApi.getAll,
   });
+
+  const { data: ratingsStatusRes } = useQuery({
+    queryKey: ['ratings', 'status'],
+    queryFn: ratingsApi.getStatus,
+  });
+
+  const { data: ratingsResultsRes } = useQuery({
+    queryKey: ['ratings', 'results'],
+    queryFn: ratingsApi.getResults,
+  });
+
+  const navigate = useNavigate();
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -180,6 +194,81 @@ export default function Dashboard() {
           />
         </div>
       )}
+
+{isVisible('ratings') && (() => {
+        const ratingsStatus = ratingsStatusRes?.data || [];
+        const ratingsResults = ratingsResultsRes?.data || [];
+        const pendingMembers = ratingsStatus.filter((m: any) => !m.submitted);
+        const myStatus = ratingsStatus.find((m: any) => m.id === user?.id);
+        const hasNotSubmitted = myStatus && !myStatus.submitted;
+
+        return (
+          <Card className="shadow-sm">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                  <Star size={20} className="text-amber-500" />
+                  {fa ? 'ارزیابی اعضا' : 'Member Ratings'}
+                </CardTitle>
+                {hasNotSubmitted && (
+                  <Button variant="secondary" onClick={() => navigate('/ratings')}>
+                    {fa ? 'ارزیابی کنید' : 'Rate now'}
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {pendingMembers.length > 0 && (
+                <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-900/10">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                    {fa
+                      ? `${pendingMembers.length} عضو هنوز ارزیابی نکرده‌اند`
+                      : `${pendingMembers.length} member${pendingMembers.length > 1 ? 's' : ''} haven't rated yet`}
+                  </p>
+                </div>
+              )}
+
+              {ratingsResults.length > 0 ? (
+                <div dir="ltr" className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={ratingsResults}>
+                      <XAxis dataKey="display_name" />
+                      <YAxis domain={[0, 15]} />
+                      <Tooltip
+                        formatter={(val: any, name: string) => {
+                          const labels: Record<string, { en: string; fa: string }> = {
+                            ethics_avg: { en: 'Ethics', fa: 'اخلاق' },
+                            participation_avg: { en: 'Participation', fa: 'مشارکت' },
+                            flexibility_avg: { en: 'Flexibility', fa: 'انعطاف' },
+                          };
+                          return [Number(val).toFixed(1), fa ? (labels[name]?.fa || name) : (labels[name]?.en || name)];
+                        }}
+                      />
+                      <Legend
+                        formatter={(value: string) => {
+                          const labels: Record<string, { en: string; fa: string }> = {
+                            ethics_avg: { en: 'Ethics', fa: 'اخلاق' },
+                            participation_avg: { en: 'Participation', fa: 'مشارکت' },
+                            flexibility_avg: { en: 'Flexibility', fa: 'انعطاف' },
+                          };
+                          return fa ? (labels[value]?.fa || value) : (labels[value]?.en || value);
+                        }}
+                      />
+                      <Bar dataKey="ethics_avg" stackId="ratings" fill="#6366f1" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="participation_avg" stackId="ratings" fill="#06b6d4" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="flexibility_avg" stackId="ratings" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {fa ? 'هنوز ارزیابی ثبت نشده است.' : 'No ratings submitted yet.'}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
 
 
@@ -374,6 +463,7 @@ export default function Dashboard() {
         );
       })()}
 
+      
     </div>
   );
 }

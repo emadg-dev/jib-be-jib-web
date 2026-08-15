@@ -13,6 +13,47 @@ export interface TelegramEventSetting { enabled: boolean; message: string; }
 export interface TelegramSettings { telegram_enabled: boolean; telegram_chat_id?: string; events: Record<string, TelegramEventSetting>; }
 export type TelegramEventKey = 'trip_created' | 'trip_updated' | 'member_added' | 'deposit_created' | 'expense_created';
 
+export interface Ratee {
+  id: string;
+  display_name: string;
+  avatar?: string;
+  ethics: number | null;
+  participation: number | null;
+  flexibility: number | null;
+  rated: boolean;
+}
+
+export interface RatingAggregate {
+  ratee_id: string;
+  display_name: string;
+  avatar: string | null;
+  ethics_avg: number;
+  participation_avg: number;
+  flexibility_avg: number;
+  overall_avg: number;
+  rated_by_count: number;
+}
+
+export interface RaterStatus {
+  id: string;
+  display_name: string;
+  avatar: string | null;
+  submitted: boolean;
+}
+
+export interface AllRating {
+  rater_id: string;
+  rater_name: string;
+  rater_avatar: string | null;
+  ratee_id: string;
+  ratee_name: string;
+  ratee_avatar: string | null;
+  ethics: number;
+  participation: number;
+  flexibility: number;
+  created_at: string;
+}
+
 export const authApi = {
   login: (data: { name: string; password: string }) => apiClient.post<SessionResponse>('/auth/login', data),
   logout: () => apiClient.post('/auth/logout'),
@@ -47,4 +88,12 @@ export const notificationsApi = {
   getSettings: () => apiClient.get<TelegramSettings>('/notifications/settings'),
   updateSettings: (data: { telegram_enabled: boolean; telegram_chat_id?: string; events?: Record<string, Partial<TelegramEventSetting>> }) => apiClient.put('/notifications/settings', data),
   sendTest: (data: { chat_id: string; title?: string; message: string }) => apiClient.post<{ delivered: boolean }>('/notifications/telegram/test', data),
+};
+
+export const ratingsApi = {
+  getRatees: () => apiClient.get<Ratee[]>('/ratings/ratees'),
+  submit: (data: { ratee_id: string; ethics: number; participation: number; flexibility: number }) => apiClient.post('/ratings', data),
+  getResults: () => apiClient.get<RatingAggregate[]>('/ratings/results'),
+  getStatus: () => apiClient.get<RaterStatus[]>('/ratings/status'),
+  getAll: () => apiClient.get<AllRating[]>('/ratings/all'),
 };
