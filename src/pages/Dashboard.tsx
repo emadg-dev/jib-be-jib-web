@@ -326,7 +326,7 @@ export default function Dashboard() {
               {ratingsResults.length > 0 ? (
                 <div dir="ltr" style={{ height: Math.max(300, ratingsResults.length * 40) }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={ratingsResults} layout="vertical" margin={{ left: 20 }}>
+                    <BarChart data={ratingsResults} layout="vertical" margin={{ left: 4 }}>
                       <XAxis type="number" domain={[0, 15]} />
                       <YAxis type="category" dataKey="display_name" width={120} tick={{ fontSize: 12 }} />
                       <Tooltip

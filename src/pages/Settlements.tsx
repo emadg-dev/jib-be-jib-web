@@ -134,8 +134,8 @@ export default function Settlements() {
         <p className="page-subtitle">
           {
             fa
-              ? 'ثبت تسویه حساب اعضا توسط مدیر (پرداخت بدهی اعضا به صندوق).'
-              : 'Record when the owner pays off a member\'s debt to the bank.'
+              ? 'ثبت پرداخت صندوق به اعضای طلبکار.'
+              : 'Record when the bank pays a member who is owed money.'
           }
         </p>
 

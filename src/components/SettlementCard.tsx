@@ -41,7 +41,7 @@ export default function SettlementCard({ settlements, fa, fmt, tgEnabled, onSend
       <CardContent>
         {settlements.length === 0 ? (
           <p className="text-sm text-gray-500 py-4 text-center">
-            {fa ? 'همه حساب‌ها صاف شده! نیازی به انتقال پول نیست.' : 'All balances are completely settled up! No transfers required.'}
+            {fa ? 'همه حساب‌ها صاف شده! نیازی به انتقال پول نیست.' : 'All balances are settled! No member-to-member transfers needed.'}
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

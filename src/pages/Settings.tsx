@@ -44,7 +44,7 @@ const DEFAULT_TEMPLATES: Record<TelegramEventKey, string> = {
   deposit_created: '{member_name} deposited {amount}.',
   expense_created: 'Expense {description} ({category}) was added for {amount}.',
   rating_submitted: 'A member has submitted their ratings.',
-  settlement_recorded: '{member_name} settled {amount}.',
+  settlement_recorded: '{member_name} received {amount} from the bank.',
   members_report: '👥 *Member Financial Breakdown*\n━━━━━━━━━━━━━━━━━━━━━━\n\n{members_list}\n\n━━━━━━━━━━━━━━━━━━━━━━\n🏦 Bank Balance: {bank_balance}',
   bank_stats_report: '🏦 *Bank Stats*\n\n💰 Bank Balance: *{bank_balance}*\n📈 Total Deposits: {total_deposits}\n📉 Total Expenses: {total_expenses}\n{settled_line}\n\n👥 Members: {member_count}\n{creditors_line}\n{debtors_line}',
   settlements_report: '📋 *Settlements Summary*\n\n{settlements_list}\n\n━━━━━━━━━━━━━━━━━━━━━━\n💰 Total Settled: *{total_settled}*\n📊 {settlement_count} settlement(s) recorded',
