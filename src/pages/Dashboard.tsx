@@ -412,6 +412,7 @@ export default function Dashboard() {
                     <Th>{fa ? 'نام عضو' : 'Member Name'}</Th>
                     <Th>{fa ? 'کل واریزی' : 'Total Deposited'}</Th>
                     <Th>{fa ? 'کل هزینه‌ها' : 'Total Consumed'}</Th>
+                    {data.totalSettled > 0 && <Th>{fa ? 'تسویه شده' : 'Settled'}</Th>}
                     <Th>{fa ? 'مانده حساب' : 'Net Balance'}</Th>
                   </Tr>
                 </Thead>
@@ -428,6 +429,7 @@ export default function Dashboard() {
                         </Td>
                         <Td className="text-green-600 font-semibold">{fmt(m.total_deposited)}</Td>
                         <Td className="text-red-600 font-semibold">{fmt(m.total_expenses)}</Td>
+                        {data.totalSettled > 0 && <Td className="text-emerald-600 font-semibold">{fmt(m.total_settled)}</Td>}
                         <Td className={`font-bold ${m.balance > 0 ? 'text-indigo-600' : m.balance < 0 ? 'text-amber-600' : 'text-gray-600'}`}>
                           <div dir='ltr'>
                             {m.balance < 0 ? '-' : '+'}{fmt(Math.abs(m.balance))}
@@ -460,6 +462,11 @@ export default function Dashboard() {
                         <span className="text-red-600">
                           {fa ? 'هزینه:' : 'Spent:'} {fmt(m.total_expenses)}
                         </span>
+                        {data.totalSettled > 0 && m.total_settled > 0 && (
+                          <span className="text-emerald-600">
+                            {fa ? 'تسویه:' : 'Settled:'} {fmt(m.total_settled)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
