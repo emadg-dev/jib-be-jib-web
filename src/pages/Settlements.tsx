@@ -1,0 +1,368 @@
+import { useState, type SetStateAction } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { LayoutGrid, List, Plus } from 'lucide-react';
+import { settlementsApi, membersApi, type SettlementRecord } from '../api/services';
+import { gregorianToJalali } from '../utils/jalaali';
+import JalaliDatePicker from '../components/JalaliDatePicker';
+import { usePreferences } from '../contexts/PreferencesContext';
+import { useConfirm } from '../components/ConfirmDialog';
+import { formatAmount, parseMoney } from '../utils/format';
+import { PageSkeleton } from '../components/Skeleton';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Button,
+  Input,
+  Label,
+  Select
+} from '../components/ui/core';
+
+export default function Settlements() {
+
+  const { language } = usePreferences();
+  const fa = language === 'fa';
+  const confirm = useConfirm();
+
+  const fmt = (v: number) =>
+    `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const queryClient = useQueryClient();
+
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
+  const [memberId, setMemberId] = useState('');
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0,10));
+  const [editing, setEditing] = useState<SettlementRecord | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'card' | 'table'>(() =>
+    typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
+  );
+  const [showForm, setShowForm] = useState(false);
+
+
+  const { data: settlements, isLoading: isLoadingSettlements } = useQuery({
+    queryKey: ['settlements'],
+    queryFn: settlementsApi.getAll
+  });
+
+  const { data: members } = useQuery({
+    queryKey: ['members'],
+    queryFn: membersApi.getAll
+  });
+
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['settlements'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+  };
+
+
+  const clear = () => {
+    setAmount('');
+    setNote('');
+    setMemberId('');
+    setDate(new Date().toISOString().slice(0,10));
+    setEditing(null);
+    setShowForm(false);
+  };
+
+
+  const create = useMutation({
+    mutationFn: settlementsApi.create,
+    onSuccess: () => {
+      refresh();
+      clear();
+    }
+  });
+
+
+  const update = useMutation({
+    mutationFn: ({ id, data }: any) => settlementsApi.update(id, data),
+    onSuccess: () => {
+      refresh();
+      clear();
+    }
+  });
+
+
+  const remove = useMutation({
+    mutationFn: settlementsApi.delete,
+    onSuccess: refresh
+  });
+
+
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const data = {
+      member_id: memberId,
+      amount: parseMoney(amount) || 0,
+      note,
+      date
+    };
+
+    if (!memberId || !data.amount)
+      return;
+
+    editing
+      ? update.mutate({ id: editing.id, data })
+      : create.mutate(data);
+  };
+
+  const submitting = create.isPending || update.isPending;
+
+
+  if (isLoadingSettlements) return <div dir={fa ? 'rtl' : 'ltr'}><PageSkeleton /></div>;
+
+  return (
+    <div dir={fa ? 'rtl' : 'ltr'} className="space-y-6">
+
+      <div>
+
+        <h1 className="page-title">
+          {fa ? 'تسویه حساب‌ها' : 'Settlements'}
+        </h1>
+
+        <p className="page-subtitle">
+          {
+            fa
+              ? 'ثبت تسویه حساب اعضا توسط مدیر (پرداخت بدهی اعضا به صندوق).'
+              : 'Record when the owner pays off a member\'s debt to the bank.'
+          }
+        </p>
+
+      </div>
+
+
+      {!showForm && !editing && (
+        <Button onClick={() => setShowForm(true)} className="w-full">
+          <Plus size={18} className="me-1" />
+          {fa ? 'ثبت تسویه جدید' : 'Record new settlement'}
+        </Button>
+      )}
+
+      {(showForm || editing) &&
+
+      <Card>
+
+        <CardHeader>
+
+          <CardTitle>
+            {
+              editing
+                ? (fa ? 'ویرایش تسویه' : 'Edit settlement')
+                : (fa ? 'ثبت تسویه جدید' : 'Record new settlement')
+            }
+          </CardTitle>
+
+        </CardHeader>
+
+
+        <CardContent>
+
+          <form
+            onSubmit={submit}
+            className="form-grid sm:grid-cols-2 xl:grid-cols-3"
+          >
+
+            <div>
+              <Label htmlFor="settlement-member">
+                {fa ? 'عضو' : 'Member'}
+              </Label>
+
+              <Select
+                id="settlement-member"
+                value={memberId}
+                onChange={(e: { target: { value: SetStateAction<string>; }; }) => setMemberId(e.target.value as string)}
+                required
+              >
+                <option value="">
+                  {fa ? 'انتخاب عضو' : 'Select member'}
+                </option>
+
+                {
+                  members?.data
+                    ?.filter(m => m.active !== false || m.id === memberId)
+                    .map(m =>
+                      <option key={m.id} value={m.id}>
+                        {m.display_name || m.name}
+                      </option>
+                    )
+                }
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="settlement-amount">
+                {fa ? 'مبلغ' : 'Amount'}
+              </Label>
+
+              <Input
+                id="settlement-amount"
+                type="text"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e: { target: { value: SetStateAction<string>; }; }) =>
+                  setAmount(formatAmount(e.target.value as string))
+                }
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="settlement-note">
+                {fa ? 'توضیحات (اختیاری)' : 'Note (optional)'}
+              </Label>
+
+              <Input
+                id="settlement-note"
+                value={note}
+                onChange={(e: { target: { value: SetStateAction<string>; }; }) => setNote(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="settlement-date">
+                {fa ? 'تاریخ' : 'Date'}
+              </Label>
+              <JalaliDatePicker id="settlement-date" value={date} onChange={(iso: string) => setDate(iso)} />
+            </div>
+
+            <div className="flex flex-wrap items-end gap-2 pb-1">
+              <Button type="submit" loading={submitting}>
+                {
+                  editing
+                    ? (fa ? 'ذخیره تغییرات' : 'Save changes')
+                    : (fa ? 'ثبت تسویه' : 'Record settlement')
+                }
+              </Button>
+
+              {
+                editing &&
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={clear}
+                >
+                  {fa ? 'لغو' : 'Cancel'}
+                </Button>
+              }
+            </div>
+
+          </form>
+
+        </CardContent>
+
+      </Card>
+      }
+
+
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="mb-4 flex items-center justify-end gap-1 mt-3">
+            <button
+              onClick={() => setViewMode('card')}
+              className={`rounded-lg p-2 transition ${viewMode === 'card' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+              aria-label={fa ? 'نمایش کارتی' : 'Card view'}
+            >
+              <LayoutGrid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`rounded-lg p-2 transition ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}
+              aria-label={fa ? 'نمایش جدولی' : 'Table view'}
+            >
+              <List size={18} />
+            </button>
+          </div>
+
+          {viewMode === 'table' ? (
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>{fa ? 'تاریخ' : 'Date'}</Th>
+                  <Th>{fa ? 'عضو' : 'Member'}</Th>
+                  <Th>{fa ? 'توضیحات' : 'Note'}</Th>
+                  <Th>{fa ? 'مبلغ' : 'Amount'}</Th>
+                  <Th>{fa ? 'عملیات' : 'Action'}</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {settlements?.data?.map(s => (
+                  <Tr key={s.id}>
+                    <Td>{s.date ? gregorianToJalali(s.date) : gregorianToJalali(s.created_at)}</Td>
+                    <Td>{s.member_name}</Td>
+                    <Td>{s.note || '-'}</Td>
+                    <Td className="font-medium text-green-600">{fmt(s.amount)}</Td>
+                    <Td>
+                      <div className="flex gap-2">
+                         <Button variant="outline" onClick={() => {
+                          setEditing(s); setMemberId(s.member_id); setAmount(formatAmount(String(s.amount)));
+                          setNote(s.note || ''); setDate(s.date ? s.date.slice(0,10) : s.created_at.slice(0,10));
+                          setShowForm(true);
+                        }}>{fa ? 'ویرایش' : 'Edit'}</Button>
+                          <Button variant="destructive" loading={deletingId === s.id} disabled={deletingId === s.id}
+                            onClick={async () => {
+                              if (deletingId) return;
+                              if (!await confirm(
+                                fa ? 'حذف تسویه' : 'Delete settlement',
+                                fa ? 'از حذف این تسویه مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this settlement? This action cannot be undone.'
+                              )) return;
+                              try { setDeletingId(s.id); await remove.mutateAsync(s.id); } finally { setDeletingId(null); }
+                            }}
+                          >{fa ? 'حذف' : 'Delete'}</Button>
+                      </div>
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {settlements?.data?.map(s => (
+                <div key={s.id} className="rounded-xl border bg-card/60 p-4 shadow-sm border-border">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-foreground">{s.member_name}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {s.date ? gregorianToJalali(s.date) : gregorianToJalali(s.created_at)}
+                        {s.note && <>{' · '}{s.note}</>}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-bold text-green-600">{fmt(s.amount)}</span>
+                  </div>
+                  <div className="mt-3 flex gap-2 border-t border-border pt-3">
+                    <Button variant="outline" size="sm" onClick={() => {
+                      setEditing(s); setMemberId(s.member_id); setAmount(formatAmount(String(s.amount)));
+                      setNote(s.note || ''); setDate(s.date ? s.date.slice(0,10) : s.created_at.slice(0,10));
+                      setShowForm(true);
+                    }}>{fa ? 'ویرایش' : 'Edit'}</Button>
+                    <Button variant="destructive" size="sm" loading={deletingId === s.id} disabled={deletingId === s.id}
+                      onClick={async () => {
+                        if (deletingId) return;
+                        if (!await confirm(
+                          fa ? 'حذف تسویه' : 'Delete settlement',
+                          fa ? 'از حذف این تسویه مطمئنی؟ این عمل قابل بازگشت نیست.' : 'Are you sure you want to delete this settlement? This action cannot be undone.'
+                        )) return;
+                        try { setDeletingId(s.id); await remove.mutateAsync(s.id); } finally { setDeletingId(null); }
+                      }}
+                    >{fa ? 'حذف' : 'Delete'}</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

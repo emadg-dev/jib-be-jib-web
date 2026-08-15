@@ -2,7 +2,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { dashboardApi, withdrawalsApi, depositsApi, profileApi, ratingsApi } from '../api/services';
 import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td, Button } from '../components/ui/core';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Wallet, TrendingUp, TrendingDown, Users, LayoutGrid, List, SlidersHorizontal, Star } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Users, LayoutGrid, List, SlidersHorizontal, Star, Banknote } from 'lucide-react';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -192,6 +192,14 @@ export default function Dashboard() {
             value={String(data.members.length)}
             icon={<Users className="w-5 h-5 text-blue-600" />}
           />
+          {data.totalSettled > 0 && (
+            <StatCard
+              title={fa ? 'تسویه شده' : 'Settled'}
+              value={fmt(data.totalSettled)}
+              icon={<Banknote className="w-5 h-5 text-emerald-600" />}
+              valueClassName="text-emerald-600"
+            />
+          )}
         </div>
       )}
 
