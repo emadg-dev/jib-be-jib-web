@@ -1,4 +1,4 @@
-export default function Avatar({ src, name, size = 40, className = '' }: { src?: string; name?: string; size?: number; className?: string }) {
+export default function Avatar({ src, name, size = 40, className = '' }: { src?: string | null; name?: string; size?: number; className?: string }) {
   if (src) {
     return (
       <img
