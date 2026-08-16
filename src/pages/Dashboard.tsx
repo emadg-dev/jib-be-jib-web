@@ -324,11 +324,21 @@ export default function Dashboard() {
               )}
 
               {ratingsResults.length > 0 ? (
-                <div dir="ltr" style={{ height: Math.max(300, ratingsResults.length * 40) }}>
+                <div
+                  dir="ltr"
+                  style={{ height: Math.max(300, ratingsResults.length * 40) }}
+                  className={hasNotSubmitted ? 'pointer-events-none select-none blur-md' : ''}
+                >
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={ratingsResults} layout="vertical" margin={{ left: 4 }}>
                       <XAxis type="number" domain={[0, 15]} />
-                      <YAxis type="category" dataKey="display_name" width={120} tick={{ fontSize: 12 }} />
+                      <YAxis
+                        type="category"
+                        dataKey="display_name"
+                        width={120}
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={hasNotSubmitted ? () => '••••••' : undefined}
+                      />
                       <Tooltip
                         formatter={(val: any, name: string) => {
                           const labels: Record<string, { en: string; fa: string }> = {
@@ -358,6 +368,11 @@ export default function Dashboard() {
               ) : (
                 <p className="text-sm text-muted-foreground">
                   {fa ? 'هنوز ارزیابی ثبت نشده است.' : 'No ratings submitted yet.'}
+                </p>
+              )}
+              {hasNotSubmitted && ratingsResults.length > 0 && (
+                <p className="mt-2 text-center text-xs text-muted-foreground">
+                  {fa ? 'نمودار پس از ثبت تمام ارزیابی‌ها نمایش داده می‌شود' : 'Chart will be visible after submitting all ratings'}
                 </p>
               )}
             </CardContent>
