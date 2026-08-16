@@ -43,8 +43,10 @@ src/
 │       ├── core.tsx          # Card, Button, Input, Label, Select, Checkbox, Table*
 │       └── alert-dialog.tsx  # Modal dialog (Radix UI, variant-aware)
 ├── contexts/
-│   ├── AuthContext.tsx       # Auth + trip selection state
+│   ├── AuthContext.tsx       # Auth + trip selection + permissions state
 │   └── PreferencesContext.tsx # Language (en/fa) + theme (light/dark)
+├── hooks/
+│   └── usePermissions.ts    # hasPermission(), canManagePermissions
 ├── layouts/
 │   └── AppLayout.tsx         # App shell (sidebar, header, nav, trip switcher)
 ├── pages/
@@ -54,7 +56,12 @@ src/
 │   ├── Deposits.tsx          # Deposit CRUD
 │   ├── Withdrawals.tsx       # Expense CRUD with beneficiary splitting
 │   ├── TripPicker.tsx        # Trip selection/creation/editing
-│   └── Profile.tsx           # Profile + password change
+│   ├── Profile.tsx           # Profile + password change
+│   ├── Ratings.tsx           # Member ratings (rate/given/received/stats tabs)
+│   ├── Finance.tsx           # Deposits + Withdrawals + Settlements tabs
+│   ├── Settings.tsx          # Trip settings (general/notifications/permissions/roles tabs)
+│   ├── Permissions.tsx       # Per-member permission overrides + role assignment
+│   └── Roles.tsx             # Custom role CRUD with permission checkboxes
 ├── types/index.ts            # All TypeScript interfaces
 └── utils/
     ├── format.ts             # Number formatting, money parsing
@@ -64,23 +71,51 @@ src/
 
 ## Routes
 
-| Route | Component | Auth | Role |
-|-------|-----------|------|------|
+| Route | Component | Auth | Access |
+|-------|-----------|------|--------|
 | `/login` | Login | No | - |
-| `/trips` | TripPicker | Yes | - |
-| `/dashboard` | Dashboard | Yes | - |
-| `/members` | Members | Yes | Owner |
-| `/deposits` | Deposits | Yes | - (writes gated in UI) |
-| `/withdrawals` | Withdrawals | Yes | - (writes gated in UI) |
-| `/profile` | Profile | Yes | - |
+| `/trips` | TripPicker | Yes | All |
+| `/dashboard` | Dashboard | Yes | All |
+| `/members` | Members | Yes | `member.*` permissions |
+| `/finance` | Finance | Yes | All |
+| `/ratings` | Ratings | Yes | All |
+| `/settings` | Settings | Yes | Owner/Admin |
+| `/profile` | Profile | Yes | All |
 
 Route guards: `ProtectedRoute` (auth check) → `RoleRoute` (role check)
 
+## Permissions System
+
+### Frontend Resolution
+
+- **Admin/Owner**: `hasPermission()` always returns `true`
+- **Member**: Uses `MEMBER_DEFAULT_PERMISSIONS` from config (no API call needed for defaults)
+- **Custom role permissions**: Resolved server-side; frontend uses server-provided defaults
+
+### usePermissions Hook
+
+```tsx
+const { hasPermission, canManagePermissions, permissions } = usePermissions();
+// hasPermission('deposit.create') → boolean
+// canManagePermissions → boolean (permissions.manage)
+```
+
+### Pages Using Permissions
+
+| Page | Permissions Used |
+|------|-----------------|
+| Members | `member.create`, `member.update`, `member.delete` |
+| Deposits | `deposit.create`, `deposit.update`, `deposit.delete` |
+| Withdrawals | `withdrawal.create`, `withdrawal.update`, `withdrawal.delete` |
+| Dashboard | `notifications.send` |
+| TripPicker | `trip.create` |
+| Settings | Owner/Admin role check (page-level) |
+
 ## State Management
 
-- **AuthContext**: user, trips, selectedTrip, login/logout/selectTrip/createTrip/updateTrip/deleteTrip
+- **AuthContext**: user, trips, selectedTrip, permissions, login/logout/selectTrip/refreshPermissions
 - **PreferencesContext**: language (en/fa), theme (light/dark) — persists to localStorage
-- **TanStack Query**: all server state (dashboard, members, deposits, withdrawals, profile)
+- **TanStack Query**: all server state (dashboard, members, deposits, withdrawals, profile, roles, permissions)
 - **Local state**: forms, editing modes, UI toggles
 
 ## API Integration
@@ -101,11 +136,12 @@ Route guards: `ProtectedRoute` (auth check) → `RoleRoute` (role check)
 | members | `membersApi.getAll`, `.create`, `.add`, `.update`, `.delete` |
 | deposits | `depositsApi.getAll`, `.create`, `.update`, `.delete` |
 | withdrawals | `withdrawalsApi.getAll`, `.create`, `.update`, `.delete` |
-| profile | `profileApi.get`, `.changePassword` |
-
-## Key Types (src/types/index.ts)
-
-`User`, `Trip`, `Member`, `Deposit`, `Withdrawal`, `WithdrawalMember`, `Dashboard`, `Balance`
+| ratings | `ratingsApi.getRatees`, `.submit`, `.getResults`, `.getStatus`, `.getAll`, `.getMine`, `.update`, `.delete`, `.deleteByMember` |
+| settlements | `settlementsApi.getAll`, `.create`, `.update`, `.delete` |
+| notifications | `notificationsApi.getSettings`, `.updateSettings`, `.sendTest`, `.sendCustom`, `.sendMembers`, `.sendBankStats`, `.sendSettlements`, `.sendRatings` |
+| profile | `profileApi.get`, `.changePassword`, `.updatePreferences`, `.uploadAvatar`, `.updateDisplayName` |
+| permissions | `permissionsApi.getRegistry`, `.getAll`, `.getMember`, `.setMember`, `.grant`, `.revoke`, `.assignRole` |
+| roles | `rolesApi.getAll`, `.getPermissions`, `.get`, `.create`, `.update`, `.delete` |
 
 ## UI Components (src/components/ui/core.tsx)
 
@@ -118,6 +154,7 @@ Route guards: `ProtectedRoute` (auth check) → `RoleRoute` (role check)
 - RTL support: dynamic `dir="rtl"`, logical CSS properties (`ps-`, `pe-`)
 - Fonts: Shabnam, Iranian Sans (Persian)
 - Custom utility classes: `.glass-panel`, `.page-title`, `.page-subtitle`, `.form-label`, `.form-grid`
+- Mobile-first responsive design with icon-only tabs on small screens
 
 ## Deployment
 
