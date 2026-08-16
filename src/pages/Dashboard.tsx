@@ -34,7 +34,7 @@ const fmt = (v: number) =>
 export default function Dashboard() {
   const { language } = usePreferences();
   const fa = language === 'fa';
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, selectedTrip } = useAuth();
   const [memberView, setMemberView] = useState<'card' | 'table'>(() =>
     typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
   );
@@ -77,32 +77,38 @@ export default function Dashboard() {
 
   const { data: res, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
-    queryFn: dashboardApi.get
+    queryFn: dashboardApi.get,
+    enabled: !!selectedTrip,
   });
 
   const { data: withdrawalsRes, isLoading: isLoadingWithdrawals } = useQuery({
     queryKey: ['withdrawals'],
     queryFn: withdrawalsApi.getAll,
+    enabled: !!selectedTrip,
   });
 
   const { data: depositsRes } = useQuery({
     queryKey: ['deposits'],
     queryFn: depositsApi.getAll,
+    enabled: !!selectedTrip,
   });
 
   const { data: ratingsStatusRes } = useQuery({
     queryKey: ['ratings', 'status'],
     queryFn: ratingsApi.getStatus,
+    enabled: !!selectedTrip,
   });
 
   const { data: ratingsResultsRes } = useQuery({
     queryKey: ['ratings', 'results'],
     queryFn: ratingsApi.getResults,
+    enabled: !!selectedTrip,
   });
 
   const { data: tgSettingsRes } = useQuery({
     queryKey: ['notifications', 'settings'],
     queryFn: notificationsApi.getSettings,
+    enabled: !!selectedTrip,
   });
 
   // const queryClient = useQueryClient();

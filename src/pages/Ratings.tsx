@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle, Button, Table, Thead, Tbody, 
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
-import { Star, Check, ArrowLeft, Eye } from 'lucide-react';
+import { Star, Check, ArrowLeft, Eye, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '../components/Avatar';
 import { PageSkeleton } from '../components/Skeleton';
+import { useConfirm } from '../components/ConfirmDialog';
 
 const CATEGORIES = [
   { key: 'ethics', en: 'Ethics', fa: 'اخلاق' },
@@ -15,38 +16,52 @@ const CATEGORIES = [
   { key: 'flexibility', en: 'Flexibility', fa: 'انعطاف‌پذیری' },
 ] as const;
 
-function StarRating({ value, onChange, disabled }: { value: number | null; onChange: (v: number) => void; disabled?: boolean }) {
+function StarRating({ value, onChange, disabled, minValue }: { value: number | null; onChange: (v: number) => void; disabled?: boolean; minValue?: number }) {
   const [hover, setHover] = useState(0);
+  const min = minValue ?? 1;
   return (
     <div className="flex gap-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange(star)}
-          onMouseEnter={() => !disabled && setHover(star)}
-          onMouseLeave={() => setHover(0)}
-          className={`transition ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
-        >
-          <Star
-            size={28}
-            className={`transition ${
-              star <= (hover || (value ?? 0))
-                ? 'fill-amber-400 text-amber-400'
-                : 'fill-none text-gray-300'
-            }`}
-          />
-        </button>
-      ))}
+      {[1, 2, 3, 4, 5].map((star) => {
+        const isDisabled = disabled || star < min;
+        return (
+          <button
+            key={star}
+            type="button"
+            disabled={isDisabled}
+            onClick={() => onChange(star)}
+            onMouseEnter={() => !isDisabled && setHover(star)}
+            onMouseLeave={() => setHover(0)}
+            className={`transition ${isDisabled ? 'cursor-default opacity-30' : 'cursor-pointer'}`}
+          >
+            <Star
+              size={28}
+              className={`transition ${
+                star <= (hover || (value ?? 0))
+                  ? 'fill-amber-400 text-amber-400'
+                  : 'fill-none text-gray-300'
+              }`}
+            />
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-function AllRatingsView({ fa }: { fa: boolean }) {
+function AllRatingsView({ fa, isAdminOrOwner }: { fa: boolean; isAdminOrOwner: boolean }) {
+  const queryClient = useQueryClient();
+  const confirm = useConfirm();
+
   const { data: allRatingsRes, isLoading } = useQuery({
     queryKey: ['ratings', 'all'],
     queryFn: ratingsApi.getAll,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: ratingsApi.deleteByMember,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ratings'] });
+    },
   });
 
   if (isLoading) return <PageSkeleton />;
@@ -74,10 +89,29 @@ function AllRatingsView({ fa }: { fa: boolean }) {
       {Object.entries(groupedByRater).map(([raterId, group]) => (
         <Card key={raterId} className="shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Avatar src={group.avatar} name={group.name} size={28} />
-              {group.name}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Avatar src={group.avatar} name={group.name} size={28} />
+                {group.name}
+              </CardTitle>
+              {isAdminOrOwner && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  loading={deleteMutation.isPending}
+                  onClick={async () => {
+                    if (!await confirm(
+                      fa ? 'حذف ارزیابی‌ها' : 'Delete ratings',
+                      fa ? `آیا از حذف تمام ارزیابی‌های ${group.name} مطمئنی؟` : `Delete all ratings given by ${group.name}?`
+                    )) return;
+                    deleteMutation.mutate(raterId);
+                  }}
+                >
+                  <Trash2 size={14} className="me-1" />
+                  {fa ? 'حذف همه' : 'Delete all'}
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -174,7 +208,7 @@ export default function Ratings() {
           </h1>
           <p className="page-subtitle">
             {selectedRatee.rated
-              ? (fa ? 'شما قبلاً این عضو را ارزیابی کرده‌اید. امتیاز جایگزین می‌شود.' : 'You already rated this member. Your new scores will replace the old ones.')
+              ? (fa ? 'شما قبلاً این عضو را ارزیابی کرده‌اید. فقط می‌توانید امتیازات را افزایش دهید.' : 'You already rated this member. You can only increase scores.')
               : (fa ? 'امتیاز خود را در هر دسته وارد کنید (۱ تا ۵).' : 'Give your score in each category (1 to 5).')}
           </p>
         </div>
@@ -196,6 +230,7 @@ export default function Ratings() {
                     value={scores[cat.key]}
                     onChange={(v) => setScores((prev) => ({ ...prev, [cat.key]: v }))}
                     disabled={submitMutation.isPending}
+                    minValue={selectedRatee.rated ? (selectedRatee[cat.key] ?? undefined) : undefined}
                   />
                 </div>
               ))}
@@ -319,7 +354,7 @@ export default function Ratings() {
           ))}
         </div>
       ) : (
-        <AllRatingsView fa={fa} />
+        <AllRatingsView fa={fa} isAdminOrOwner={isAdminOrOwner} />
       )}
     </div>
   );

@@ -102,6 +102,7 @@ export const ratingsApi = {
   getResults: () => apiClient.get<RatingAggregate[]>('/ratings/results'),
   getStatus: () => apiClient.get<RaterStatus[]>('/ratings/status'),
   getAll: () => apiClient.get<AllRating[]>('/ratings/all'),
+  deleteByMember: (memberId: string) => apiClient.delete(`/ratings/member/${memberId}`),
 };
 
 export const settlementsApi = {

@@ -27,7 +27,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const activeTrips = available.filter(trip => trip.active !== false);
     const explicitlySelected = session.selected_trip || activeTrips.find(item => item.id === session.user?.trip_id);
     const trip = explicitlySelected || activeTrips.at(-1) || null;
-    setSelectedTrip(trip); setRequiresTripSelection(false);
+    setSelectedTrip(trip);
+    setRequiresTripSelection(!trip && session.requires_trip_selection);
   };
   useEffect(() => {
     authApi.me().then(async response => {
@@ -37,12 +38,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const available = payload<Trip[]>(await tripsApi.available());
         setTrips(available);
         const hasSelectedTrip = session.selected_trip || session.user?.trip_id;
-        const latest = available.filter(trip => trip.active !== false).at(-1);
-        if (!hasSelectedTrip && latest) {
-          const result = payload<{ token: string; trip?: Trip }>(await tripsApi.select(latest.id));
-          if (result.token) localStorage.setItem('token', result.token);
-          setSelectedTrip(result.trip || latest);
-          window.dispatchEvent(new Event('trip-changed'));
+        if (!hasSelectedTrip) {
+          const latest = available.filter(trip => trip.active !== false).at(-1);
+          if (latest) {
+            const result = payload<{ token: string; trip?: Trip }>(await tripsApi.select(latest.id));
+            if (result.token) localStorage.setItem('token', result.token);
+            setSelectedTrip(result.trip || latest);
+            setRequiresTripSelection(false);
+            window.dispatchEvent(new Event('trip-changed'));
+          }
         }
       } catch { /* session trips remain available */ }
     }).catch(() => setUser(null)).finally(() => setLoading(false));
@@ -57,9 +61,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const latest = available.filter(trip => trip.active !== false).at(-1);
     if (!hasSelectedTrip && latest) await selectTrip(latest.id);
   };
-  const login = (session: SessionResponse) => {
+  const login = async (session: SessionResponse) => {
     applySession(session);
-    tripsApi.available().then(async response => { const available = payload<Trip[]>(response); setTrips(available); await activateLatestTrip(available, session); }).catch(() => undefined);
+    try {
+      const available = payload<Trip[]>(await tripsApi.available());
+      setTrips(available);
+      if (session.requires_trip_selection) {
+        const latest = available.filter(trip => trip.active !== false).at(-1);
+        if (latest) {
+          const result = payload<{ token: string; trip?: Trip }>(await tripsApi.select(latest.id));
+          if (result.token) localStorage.setItem('token', result.token);
+          setSelectedTrip(result.trip || latest);
+          setRequiresTripSelection(false);
+          window.dispatchEvent(new Event('trip-changed'));
+        }
+      } else {
+        await activateLatestTrip(available, session);
+      }
+    } catch { /* session trips remain available */ }
   };
   const selectTrip = async (id: string) => {
     const result = payload<{ token: string; trip?: Trip }>(await tripsApi.select(id));
