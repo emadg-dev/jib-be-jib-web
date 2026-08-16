@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
-import { dashboardApi, ratingsApi } from '../api/services';
+import { dashboardApi } from '../api/services';
 import { LayoutDashboard, Users, LogOut, Languages, Moon, Sun, Map, User, Settings, Star, Wallet } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
@@ -15,15 +15,15 @@ export default function AppLayout() {
   const fa = language === 'fa';
   useEffect(() => { const show = () => setPermissionNotice(true); window.addEventListener('owner-permission-required', show); return () => window.removeEventListener('owner-permission-required', show); }, []);
 
-  const { data: ratingsStatusRes } = useQuery({
-    queryKey: ['ratings', 'status'],
-    queryFn: ratingsApi.getStatus,
-  });
+  // const { data: ratingsStatusRes } = useQuery({
+  //   queryKey: ['ratings', 'status'],
+  //   queryFn: ratingsApi.getStatus,
+  // });
 
-  const ratingsStatus = ratingsStatusRes?.data || [];
-  const myStatus = ratingsStatus.find((m: any) => m.id === user?.id);
-  const isAdminOrOwner = user?.role === 'owner' || user?.role === 'admin';
-  const showRatingsTab = isAdminOrOwner || !myStatus?.submitted;
+  // const ratingsStatus = ratingsStatusRes?.data || [];
+  // const myStatus = ratingsStatus.find((m: any) => m.id === user?.id);
+  // const isAdminOrOwner = user?.role === 'owner' || user?.role === 'admin';
+  const showRatingsTab = true;
 
   const nav = [
     { name: fa ? 'داشبورد' : 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'owner', 'member'] },

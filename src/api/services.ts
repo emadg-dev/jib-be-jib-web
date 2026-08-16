@@ -43,6 +43,7 @@ export interface RaterStatus {
 }
 
 export interface AllRating {
+  id: string;
   rater_id: string;
   rater_name: string;
   rater_avatar: string | null;
@@ -102,6 +103,9 @@ export const ratingsApi = {
   getResults: () => apiClient.get<RatingAggregate[]>('/ratings/results'),
   getStatus: () => apiClient.get<RaterStatus[]>('/ratings/status'),
   getAll: () => apiClient.get<AllRating[]>('/ratings/all'),
+  getMine: () => apiClient.get<AllRating[]>('/ratings/mine'),
+  update: (ratingId: string, data: { ratee_id: string; ethics: number; participation: number; flexibility: number }) => apiClient.put(`/ratings/${ratingId}`, data),
+  delete: (ratingId: string) => apiClient.delete(`/ratings/${ratingId}`),
   deleteByMember: (memberId: string) => apiClient.delete(`/ratings/member/${memberId}`),
 };
 

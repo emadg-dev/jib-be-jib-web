@@ -5,7 +5,7 @@ import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
 import { Star, Check, ArrowLeft, Eye, Users, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import Avatar from '../components/Avatar';
 import { PageSkeleton } from '../components/Skeleton';
 import { useConfirm } from '../components/ConfirmDialog';
@@ -48,13 +48,97 @@ function StarRating({ value, onChange, disabled, minValue }: { value: number | n
   );
 }
 
+function EditRatingDialog({ fa, rating, isAdminOrOwner, onClose }: {
+  fa: boolean;
+  rating: AllRating;
+  isAdminOrOwner: boolean;
+  onClose: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [scores, setScores] = useState({
+    ethics: rating.ethics,
+    participation: rating.participation,
+    flexibility: rating.flexibility,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: () => ratingsApi.update(rating.id, {
+      ratee_id: rating.ratee_id,
+      ethics: scores.ethics,
+      participation: scores.participation,
+      flexibility: scores.flexibility,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ratings'] });
+      onClose();
+    },
+  });
+
+  const canSubmit = scores.ethics !== null && scores.participation !== null && scores.flexibility !== null && !updateMutation.isPending;
+  const canDecrease = isAdminOrOwner;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="mx-4 w-full max-w-md rounded-2xl bg-card p-6 shadow-xl border border-border" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-bold mb-2">
+          {fa ? 'ویرایش امتیاز' : 'Edit Rating'}
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          {fa ? `امتیاز شما به ${rating.ratee_name}` : `Your rating for ${rating.ratee_name}`}
+          {!canDecrease && (
+            <span className="block text-amber-600 mt-1">
+              {fa ? 'فقط می‌توانید امتیازات را افزایش دهید.' : 'You can only increase scores.'}
+            </span>
+          )}
+        </p>
+
+        <div className="space-y-4">
+          {CATEGORIES.map((cat) => (
+            <div key={cat.key} className="flex items-center justify-between gap-4">
+              <p className="text-sm font-medium text-foreground min-w-[100px]">
+                {fa ? cat.fa : cat.en}
+              </p>
+              <StarRating
+                value={scores[cat.key]}
+                onChange={(v) => setScores((prev) => ({ ...prev, [cat.key]: v }))}
+                disabled={updateMutation.isPending}
+                minValue={!canDecrease ? rating[cat.key] ?? undefined : undefined}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2">
+          <Button variant="secondary" onClick={onClose} disabled={updateMutation.isPending}>
+            {fa ? 'لغو' : 'Cancel'}
+          </Button>
+          <Button
+            loading={updateMutation.isPending}
+            disabled={!canSubmit}
+            onClick={() => updateMutation.mutate()}
+          >
+            <Check size={16} className="me-2" />
+            {fa ? 'بروزرسانی' : 'Update'}
+          </Button>
+        </div>
+
+        {updateMutation.isError && (
+          <p className="mt-3 text-sm text-red-500">
+            {fa ? 'خطا در بروزرسانی امتیاز.' : 'Failed to update rating.'}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AllRatingsView({ fa, isAdminOrOwner }: { fa: boolean; isAdminOrOwner: boolean }) {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
 
   const { data: allRatingsRes, isLoading } = useQuery({
-    queryKey: ['ratings', 'all'],
-    queryFn: ratingsApi.getAll,
+    queryKey: ['ratings', isAdminOrOwner ? 'all' : 'mine'],
+    queryFn: isAdminOrOwner ? ratingsApi.getAll : ratingsApi.getMine,
   });
 
   const deleteMutation = useMutation({
@@ -63,6 +147,8 @@ function AllRatingsView({ fa, isAdminOrOwner }: { fa: boolean; isAdminOrOwner: b
       queryClient.invalidateQueries({ queryKey: ['ratings'] });
     },
   });
+
+  const [editingRating, setEditingRating] = useState<AllRating | null>(null);
 
   if (isLoading) return <PageSkeleton />;
 
@@ -121,6 +207,7 @@ function AllRatingsView({ fa, isAdminOrOwner }: { fa: boolean; isAdminOrOwner: b
                   <Th>{fa ? 'اخلاق' : 'Ethics'}</Th>
                   <Th>{fa ? 'مشارکت' : 'Participation'}</Th>
                   <Th>{fa ? 'انعطاف' : 'Flexibility'}</Th>
+                  <Th></Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -135,6 +222,14 @@ function AllRatingsView({ fa, isAdminOrOwner }: { fa: boolean; isAdminOrOwner: b
                     <Td>{r.ethics}</Td>
                     <Td>{r.participation}</Td>
                     <Td>{r.flexibility}</Td>
+                    <Td>
+                      <button
+                        onClick={() => setEditingRating(r)}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        {fa ? 'ویرایش' : 'Edit'}
+                      </button>
+                    </Td>
                   </Tr>
                 ))}
               </Tbody>
@@ -142,6 +237,15 @@ function AllRatingsView({ fa, isAdminOrOwner }: { fa: boolean; isAdminOrOwner: b
           </CardContent>
         </Card>
       ))}
+
+      {editingRating && (
+        <EditRatingDialog
+          fa={fa}
+          rating={editingRating}
+          isAdminOrOwner={isAdminOrOwner}
+          onClose={() => setEditingRating(null)}
+        />
+      )}
     </div>
   );
 }
@@ -247,7 +351,7 @@ export default function Ratings() {
   const { language } = usePreferences();
   const fa = language === 'fa';
   const { user } = useAuth();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const isAdminOrOwner = user?.role === 'owner' || user?.role === 'admin';
@@ -361,15 +465,12 @@ export default function Ratings() {
     return (
       <div dir={fa ? 'rtl' : 'ltr'} className="space-y-6">
         <div>
-          <h1 className="page-title">{fa ? 'ارزیابی اعضا' : 'Member Ratings'}</h1>
+          <h1 className="page-title">{fa ? 'ارزیابی‌های من' : 'My Ratings'}</h1>
           <p className="page-subtitle">
-            {fa ? 'شما قبلاً تمام اعضا را ارزیابی کرده‌اید.' : 'You have already rated all members.'}
+            {fa ? 'شما قبلاً تمام اعضا را ارزیابی کرده‌اید. می‌توانید امتیازات خود را مشاهده و بروزرسانی کنید.' : 'You have rated all members. You can view and update your ratings.'}
           </p>
         </div>
-        <Button variant="secondary" onClick={() => navigate('/dashboard')}>
-          <ArrowLeft size={16} className="me-2" />
-          {fa ? 'بازگشت به داشبورد' : 'Back to Dashboard'}
-        </Button>
+        <AllRatingsView fa={fa} isAdminOrOwner={false} />
       </div>
     );
   }
