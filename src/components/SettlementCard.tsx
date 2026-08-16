@@ -14,9 +14,9 @@ const GRADIENTS = [
 const TEXT_COLORS = ['text-indigo-700', 'text-emerald-700', 'text-violet-700', 'text-amber-700', 'text-rose-700', 'text-cyan-700'];
 const ARROW_COLORS = ['text-indigo-500', 'text-emerald-500', 'text-violet-500', 'text-amber-500', 'text-rose-500', 'text-cyan-500'];
 
-type Props = { settlements: Settlement[]; fa: boolean; fmt: (v: number) => string; tgEnabled?: boolean; onSendTelegram?: () => void; isSending?: boolean };
+type Props = { settlements: Settlement[]; fa: boolean; fmt: (v: number) => string; tgEnabled?: boolean; isOwner?: boolean; onSendTelegram?: () => void; isSending?: boolean };
 
-export default function SettlementCard({ settlements, fa, fmt, tgEnabled, onSendTelegram, isSending }: Props) {
+export default function SettlementCard({ settlements, fa, fmt, tgEnabled, isOwner, onSendTelegram, isSending }: Props) {
   return (
     <Card className="shadow-sm">
       <CardHeader>
@@ -25,7 +25,7 @@ export default function SettlementCard({ settlements, fa, fmt, tgEnabled, onSend
             <DollarSign className="w-5 h-5 text-indigo-600" />
             {fa ? 'پیشنهاد تسویه حساب' : 'Suggested Settlements'}
           </CardTitle>
-          {tgEnabled && onSendTelegram && (
+          {tgEnabled && isOwner && onSendTelegram && (
             <button
               onClick={onSendTelegram}
               disabled={isSending}

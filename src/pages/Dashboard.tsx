@@ -34,7 +34,7 @@ const fmt = (v: number) =>
 export default function Dashboard() {
   const { language } = usePreferences();
   const fa = language === 'fa';
-  const { user, updateUser, selectedTrip } = useAuth();
+  const { user, updateUser, selectedTrip, isOwner } = useAuth();
   const [memberView, setMemberView] = useState<'card' | 'table'>(() =>
     typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
   );
@@ -182,7 +182,7 @@ export default function Dashboard() {
         </div>
 
         <div className="flex items-center gap-2">
-          {tgEnabled && (
+          {tgEnabled && isOwner && (
             <button
               onClick={() => setCustomMessageOpen(true)}
               disabled={isSending}
@@ -232,7 +232,7 @@ export default function Dashboard() {
 
       {isVisible('stats') && (
         <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4 text-center">
-           {tgEnabled && (
+           {tgEnabled && isOwner && (
             <div className="col-span-full flex justify-end">
               <button
                 onClick={() => sendBankStatsMutation.mutate()}
@@ -299,7 +299,7 @@ export default function Dashboard() {
                   {fa ? 'ارزیابی اعضا' : 'Member Ratings'}
                 </CardTitle>
                 <div className="flex items-center gap-1">
-                  {tgEnabled && (
+                  {tgEnabled && isOwner && (
                     <button
                       onClick={() => sendRatingsMutation.mutate()}
                       disabled={isSending}
@@ -396,7 +396,7 @@ export default function Dashboard() {
                 {fa ? 'وضعیت حساب اعضا' : 'Member Financial Breakdown'}
               </CardTitle>
               <div className="flex items-center gap-1">
-                {tgEnabled && (
+                {tgEnabled && isOwner && (
                   <button
                     onClick={() => sendMembersMutation.mutate()}
                     disabled={isSending}
@@ -596,6 +596,7 @@ export default function Dashboard() {
                 fa={fa}
                 fmt={fmt}
                 tgEnabled={tgEnabled}
+                isOwner={isOwner}
                 onSendTelegram={() => sendSettlementsMutation.mutate()}
                 isSending={isSending}
               />
