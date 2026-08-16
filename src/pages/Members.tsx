@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { membersApi } from '../api/services';
-import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, Td, Button, Input, Label, Select, Checkbox } from '../components/ui/core';
+import { Card, CardContent, Table, Thead, Tbody, Tr, Th, Td, Button, Input, Label, Select, Checkbox } from '../components/ui/core';
+import { FormDialogRoot, FormDialogContent, FormDialogHeader, FormDialogTitle, FormDialogBody, FormDialogFooter, FormDialogClose } from '../components/ui/FormDialog';
 import { useForm } from 'react-hook-form';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,9 +9,10 @@ import { usePermissions } from '../hooks/usePermissions';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useState } from 'react';
 import { translateError } from '../utils/translations';
-import { Eye, EyeOff, Pencil, LayoutGrid, List, Plus } from 'lucide-react';
+import { Eye, EyeOff, Pencil, LayoutGrid, List, Plus, Shield } from 'lucide-react';
 import { PageSkeleton } from '../components/Skeleton';
 import Avatar from '../components/Avatar';
+import MemberPermissionsModal from '../components/MemberPermissionsModal';
 
 export default function Members() {
   const { language } = usePreferences();
@@ -41,6 +43,7 @@ export default function Members() {
     typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
   );
   const [showForm, setShowForm] = useState(false);
+  const [permissionsMemberId, setPermissionsMemberId] = useState<string | null>(null);
 
   const { data: members, isLoading: isLoadingMembers } = useQuery({
     queryKey: ['members'],
@@ -124,13 +127,6 @@ export default function Members() {
   };
 
 
-  const cancelEdit = () => {
-    setEditingMember(null);
-    reset();
-    setShowForm(false);
-  };
-
-
   if (isLoadingMembers) return <div dir={fa ? 'rtl' : 'ltr'}><PageSkeleton /></div>;
 
   return (
@@ -161,123 +157,82 @@ export default function Members() {
         </div>
       )}
 
-      {(canCreate || canUpdate) && !showForm && !editingMember && (
-        <Button onClick={() => setShowForm(true)} className="w-full">
-          <Plus size={18} className="me-1" />
-          {fa ? 'افزودن عضو جدید' : 'Add new member'}
+
+
+      {(canCreate || canUpdate) && (
+        <Button onClick={() => { setEditingMember(null); reset(); setShowForm(true); }}>
+          <Plus size={16} className="me-2" />
+          {fa ? 'افزودن عضو' : 'Add Member'}
         </Button>
       )}
 
-      {(canCreate || canUpdate) && (showForm || editingMember) && <Card>
+      <FormDialogRoot open={showForm} onOpenChange={setShowForm}>
+        <FormDialogContent>
+          <FormDialogHeader>
+            <FormDialogTitle>
+              {editingMember ? (fa ? 'ویرایش عضو' : 'Edit Member') : (fa ? 'افزودن عضو' : 'Add Member')}
+            </FormDialogTitle>
+          </FormDialogHeader>
+          <FormDialogBody>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="member-name" className="text-xs">{fa ? 'نام' : 'Name'}</Label>
+                  <Input id="member-name" {...register('name', { required: true })} placeholder={fa ? 'نام کاربری یکتا' : 'Unique login username'} className="h-9 text-sm" />
+                </div>
 
-        <CardHeader>
-          <CardTitle>
-            {
-              editingMember
-                ? (fa ? 'ویرایش عضو' : 'Edit member')
-                : (fa ? 'افزودن عضو' : 'Add member')
-            }
-          </CardTitle>
-        </CardHeader>
+                <div>
+                  <Label htmlFor="member-display" className="text-xs">{fa ? 'نام نمایشی' : 'Display name'}</Label>
+                  <Input id="member-display" {...register('display_name', { required: true })} className="h-9 text-sm" />
+                </div>
 
+                <div>
+                  <Label htmlFor="member-password" className="text-xs">{fa ? 'رمز عبور' : 'Password'}</Label>
+                  <div className="relative">
+                    <Input
+                      id="member-password"
+                      type={showPassword ? 'text' : 'password'}
+                      {...register('password')}
+                      className="pe-9 h-9 text-sm"
+                      placeholder={editingMember ? (fa ? 'خالی = بدون تغییر' : 'Empty = keep current') : ''}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute end-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
 
-        <CardContent>
+                <div>
+                  <Label htmlFor="member-role" className="text-xs">{fa ? 'نقش' : 'Role'}</Label>
+                  <Select id="member-role" {...register('role')} className="h-9 text-sm">
+                    <option value="member">{fa ? 'عضو' : 'Member'}</option>
+                    <option value="owner">{fa ? 'مدیر' : 'Owner'}</option>
+                  </Select>
+                </div>
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="form-grid sm:grid-cols-2 xl:grid-cols-3"
-          >
-
-            <div>
-              <Label htmlFor="member-name">
-                {fa ? 'نام' : 'Name'}
-              </Label>
-
-              <Input id="member-name" {...register('name', { required: true })} placeholder={fa ? 'نام کاربری یکتا' : 'Unique login username'} />
-
-            </div>
-
-            <div>
-              <Label htmlFor="member-display">{fa ? 'نام نمایشی' : 'Display name'}</Label>
-              <Input id="member-display" {...register('display_name', { required: true })} />
-            </div>
-
-            <div>
-              <Label htmlFor="member-password">
-                {fa ? 'رمز عبور' : 'Password'}
-              </Label>
-
-              <div className="relative">
-                <Input
-                  id="member-password"
-                  type={showPassword ? 'text' : 'password'}
-                  {...register('password')}
-                  className="pe-10"
-                  placeholder={
-                    editingMember
-                      ? (fa ? 'خالی بگذارید بدون تغییر بماند' : 'Leave empty to keep current')
-                      : ''
-                  }
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+                <div className="flex items-end pb-0.5">
+                  <Checkbox {...register('active')}>
+                    <span className="text-xs">{fa ? 'فعال' : 'Active'}</span>
+                  </Checkbox>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <Label htmlFor="member-role">
-                {fa ? 'نقش' : 'Role'}
-              </Label>
-
-              <Select id="member-role" {...register('role')}>
-                <option value="member">
-                  {fa ? 'عضو' : 'Member'}
-                </option>
-
-                <option value="owner">
-                  {fa ? 'مدیر' : 'Owner'}
-                </option>
-              </Select>
-            </div>
-
-            <div className="flex items-end pb-1">
-              <Checkbox {...register('active')}>
-                {fa ? 'عضو فعال' : 'Active member'}
-              </Checkbox>
-            </div>
-
-            <div className="flex flex-wrap items-end gap-2 pb-1">
-              <Button type="submit" loading={submitting}>
-                {
-                  editingMember
-                    ? (fa ? 'ذخیره تغییرات' : 'Save changes')
-                    : (fa ? 'افزودن عضو' : 'Add member')
-                }
-              </Button>
-
-              {
-                editingMember &&
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={cancelEdit}
-                >
-                  {fa ? 'لغو' : 'Cancel'}
+              <FormDialogFooter>
+                <FormDialogClose asChild>
+                  <Button type="button" variant="secondary">{fa ? 'لغو' : 'Cancel'}</Button>
+                </FormDialogClose>
+                <Button type="submit" loading={submitting}>
+                  {editingMember ? (fa ? 'ذخیره' : 'Save') : (fa ? 'افزودن' : 'Add')}
                 </Button>
-              }
-            </div>
-
-          </form>
-
-        </CardContent>
-
-      </Card>}
+              </FormDialogFooter>
+            </form>
+          </FormDialogBody>
+        </FormDialogContent>
+      </FormDialogRoot>
 
 
 
@@ -334,6 +289,11 @@ export default function Members() {
                      {(canUpdate || canDelete) && (
                       <Td>
                         <div className="flex gap-2">
+                           {isOwner && m.role !== 'admin' && (
+                            <Button variant="secondary" size="sm" onClick={() => setPermissionsMemberId(m.id)}>
+                              <Shield size={14} />
+                            </Button>
+                          )}
                            <Button variant="secondary" onClick={() => { editMember(m); setShowForm(true); }}>
                             <Pencil size={16} />{fa ? 'ویرایش' : 'Edit'}
                           </Button>
@@ -388,6 +348,11 @@ export default function Members() {
                     </p>
                      {(canUpdate || canDelete) && (
                       <div className="mt-3 flex gap-2 border-t border-border pt-3">
+                         {isOwner && m.role !== 'admin' && (
+                          <Button variant="secondary" size="sm" onClick={() => setPermissionsMemberId(m.id)}>
+                            <Shield size={14} className="me-1" />{fa ? 'دسترسی' : 'Permissions'}
+                          </Button>
+                        )}
                          <Button variant="outline" size="sm" onClick={() => { editMember(m); setShowForm(true); }}>
                           <Pencil size={14} className="me-1" />{fa ? 'ویرایش' : 'Edit'}
                         </Button>
@@ -416,6 +381,14 @@ export default function Members() {
           )}
         </CardContent>
       </Card>
+
+      {permissionsMemberId && (
+        <MemberPermissionsModal
+          memberId={permissionsMemberId}
+          open={!!permissionsMemberId}
+          onOpenChange={(open) => { if (!open) setPermissionsMemberId(null); }}
+        />
+      )}
     </div>
   );
 }

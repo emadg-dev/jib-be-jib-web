@@ -12,8 +12,6 @@ import { PageSkeleton } from '../components/Skeleton';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
   Table,
   Thead,
   Tbody,
@@ -25,6 +23,15 @@ import {
   Label,
   Select
 } from '../components/ui/core';
+import {
+  FormDialogRoot,
+  FormDialogContent,
+  FormDialogHeader,
+  FormDialogTitle,
+  FormDialogBody,
+  FormDialogFooter,
+  FormDialogClose
+} from '../components/ui/FormDialog';
 
 export default function Settlements() {
 
@@ -171,127 +178,96 @@ export default function Settlements() {
         </div>
       )}
 
-      {!showForm && !editing && (
-        <Button onClick={() => setShowForm(true)} className="w-full">
-          <Plus size={18} className="me-1" />
-          {fa ? 'ثبت تسویه جدید' : 'Record new settlement'}
-        </Button>
-      )}
+      <Button onClick={() => setShowForm(true)}>
+        <Plus size={16} className="me-1" />
+        {fa ? 'ثبت تسویه جدید' : 'Record new settlement'}
+      </Button>
 
-      {(showForm || editing) &&
-
-      <Card>
-
-        <CardHeader>
-
-          <CardTitle>
-            {
-              editing
-                ? (fa ? 'ویرایش تسویه' : 'Edit settlement')
-                : (fa ? 'ثبت تسویه جدید' : 'Record new settlement')
-            }
-          </CardTitle>
-
-        </CardHeader>
-
-
-        <CardContent>
-
-          <form
-            onSubmit={submit}
-            className="form-grid sm:grid-cols-2 xl:grid-cols-3"
-          >
-
-            <div>
-              <Label htmlFor="settlement-member">
-                {fa ? 'عضو' : 'Member'}
-              </Label>
-
-              <Select
-                id="settlement-member"
-                value={memberId}
-                onChange={(e: { target: { value: SetStateAction<string>; }; }) => setMemberId(e.target.value as string)}
-                required
-              >
-                <option value="">
-                  {fa ? 'انتخاب عضو' : 'Select member'}
-                </option>
-
-                {
-                  members?.data
+      <FormDialogRoot open={showForm} onOpenChange={setShowForm}>
+        <FormDialogContent>
+          <FormDialogHeader>
+            <FormDialogTitle>
+              {editing
+                ? (fa ? 'ویرایش تسویه' : 'Edit Settlement')
+                : (fa ? 'افزودن تسویه' : 'Add Settlement')}
+            </FormDialogTitle>
+          </FormDialogHeader>
+          <FormDialogBody>
+            <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="settlement-member">
+                  {fa ? 'عضو' : 'Member'}
+                </Label>
+                <Select
+                  id="settlement-member"
+                  value={memberId}
+                  onChange={(e: { target: { value: SetStateAction<string>; }; }) => setMemberId(e.target.value as string)}
+                  required
+                >
+                  <option value="">
+                    {fa ? 'انتخاب عضو' : 'Select member'}
+                  </option>
+                  {members?.data
                     ?.filter(m => m.active !== false || m.id === memberId)
-                    .map(m =>
+                    .map(m => (
                       <option key={m.id} value={m.id}>
                         {m.display_name || m.name}
                       </option>
-                    )
-                }
-              </Select>
-            </div>
+                    ))}
+                </Select>
+              </div>
 
-            <div>
-              <Label htmlFor="settlement-amount">
-                {fa ? 'مبلغ' : 'Amount'}
-              </Label>
+              <div>
+                <Label htmlFor="settlement-amount">
+                  {fa ? 'مبلغ' : 'Amount'}
+                </Label>
+                <Input
+                  id="settlement-amount"
+                  type="text"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e: { target: { value: SetStateAction<string>; }; }) =>
+                    setAmount(formatAmount(e.target.value as string))
+                  }
+                  required
+                />
+              </div>
 
-              <Input
-                id="settlement-amount"
-                type="text"
-                inputMode="decimal"
-                value={amount}
-                onChange={(e: { target: { value: SetStateAction<string>; }; }) =>
-                  setAmount(formatAmount(e.target.value as string))
-                }
-                required
-              />
-            </div>
+              <div>
+                <Label htmlFor="settlement-note">
+                  {fa ? 'توضیحات (اختیاری)' : 'Note (optional)'}
+                </Label>
+                <Input
+                  id="settlement-note"
+                  value={note}
+                  onChange={(e: { target: { value: SetStateAction<string>; }; }) => setNote(e.target.value)}
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="settlement-note">
-                {fa ? 'توضیحات (اختیاری)' : 'Note (optional)'}
-              </Label>
-
-              <Input
-                id="settlement-note"
-                value={note}
-                onChange={(e: { target: { value: SetStateAction<string>; }; }) => setNote(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="settlement-date">
-                {fa ? 'تاریخ' : 'Date'}
-              </Label>
-              <JalaliDatePicker id="settlement-date" value={date} onChange={(iso: string) => setDate(iso)} />
-            </div>
-
-            <div className="flex flex-wrap items-end gap-2 pb-1">
-              <Button type="submit" loading={submitting}>
-                {
-                  editing
-                    ? (fa ? 'ذخیره تغییرات' : 'Save changes')
-                    : (fa ? 'ثبت تسویه' : 'Record settlement')
-                }
+              <div>
+                <Label htmlFor="settlement-date">
+                  {fa ? 'تاریخ' : 'Date'}
+                </Label>
+                <JalaliDatePicker id="settlement-date" value={date} onChange={(iso: string) => setDate(iso)} />
+              </div>
+            </form>
+          </FormDialogBody>
+          <FormDialogFooter>
+            <FormDialogClose asChild>
+              <Button type="button" variant="secondary" onClick={clear}>
+                {fa ? 'لغو' : 'Cancel'}
               </Button>
-
-              {
-                editing &&
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={clear}
-                >
-                  {fa ? 'لغو' : 'Cancel'}
-                </Button>
-              }
-            </div>
-
-          </form>
-
-        </CardContent>
-
-      </Card>
-      }
+            </FormDialogClose>
+            <Button type="submit" loading={submitting}
+              onClick={() => {
+                const form = document.querySelector<HTMLFormElement>('form[class*="grid"]');
+                form?.requestSubmit();
+              }}>
+              {editing ? (fa ? 'ذخیره' : 'Save') : (fa ? 'افزودن' : 'Add')}
+            </Button>
+          </FormDialogFooter>
+        </FormDialogContent>
+      </FormDialogRoot>
 
 
 

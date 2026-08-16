@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { rolesApi, permissionsApi, type TripRole, type PermissionDefinition } from '../api/services';
-import { Card, CardContent, Button, Input, Label } from '../components/ui/core';
+import { Card, Button, Input, Label } from '../components/ui/core';
+import { FormDialogRoot, FormDialogContent, FormDialogHeader, FormDialogTitle, FormDialogBody, FormDialogFooter, FormDialogClose } from '../components/ui/FormDialog';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useConfirm } from '../components/ConfirmDialog';
-import { useState } from 'react';
+import { useState, type SetStateAction } from 'react';
 import { translateError } from '../utils/translations';
-import { ShieldPlus, X, Trash2, Save, Edit3, Crown, User, ChevronDown, ChevronUp } from 'lucide-react';
+import { ShieldPlus, Trash2, Save, Edit3, Crown, User, ChevronDown, ChevronUp } from 'lucide-react';
 import { PageSkeleton } from '../components/Skeleton';
 
 const BUILTIN_ROLES = [
@@ -30,7 +31,7 @@ export default function RolesPage() {
   };
 
   const [editingRole, setEditingRole] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [formName, setFormName] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formPerms, setFormPerms] = useState<Set<string>>(new Set());
@@ -89,7 +90,7 @@ export default function RolesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ roleId, name, description, permissions }: { roleId: string; name: string; description: string | null; permissions: string[] }) =>
+    mutationFn: ({ roleId, name, description, permissions }: { roleId: string; name: string; description: string | undefined; permissions: string[] }) =>
       rolesApi.update(roleId, { name, description, permissions }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
@@ -116,7 +117,7 @@ export default function RolesPage() {
     setFormPerms(new Set());
     setBaseRoleId(null);
     setEditingRole(null);
-    setShowCreate(false);
+    setShowForm(false);
   };
 
   const startEdit = (role: TripRole) => {
@@ -125,7 +126,7 @@ export default function RolesPage() {
     setFormDesc(role.description || '');
     setFormPerms(new Set(rolePerms[role.id] || []));
     setBaseRoleId(null);
-    setShowCreate(false);
+    setShowForm(true);
   };
 
   const togglePerm = (key: string) => {
@@ -162,9 +163,9 @@ export default function RolesPage() {
               : 'Create custom roles and assign permissions to members.'}
           </p>
         </div>
-        {!showCreate && !editingRole && (
-          <Button onClick={() => setShowCreate(true)} className="shrink-0">
-            <span className="text-lg leading-none me-1">+</span> {fa ? 'نقش جدید' : 'New Role'}
+        {!showForm && (
+          <Button onClick={() => { resetForm(); setShowForm(true); }} className="shrink-0">
+            <ShieldPlus size={16} className="me-1" /> {fa ? 'نقش جدید' : 'New Role'}
           </Button>
         )}
       </div>
@@ -180,148 +181,142 @@ export default function RolesPage() {
         </div>
       )}
 
-      {/* Create / Edit form */}
-      {(showCreate || editingRole) && (
-        <Card className="border-indigo-200 dark:border-indigo-800">
-          <CardContent className="space-y-4 pt-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-sm">
-                {editingRole ? (fa ? 'ویرایش نقش' : 'Edit Role') : (fa ? 'نقش جدید' : 'New Role')}
-              </h3>
-              <button onClick={resetForm} className="p-1 rounded-lg hover:bg-accent">
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Base role picker */}
-            <div className="space-y-2">
-              <Label>{fa ? 'نقش پایه (اختیاری)' : 'Base role (optional)'}</Label>
-              <p className="text-xs text-muted-foreground">
-                {fa ? 'دسترسی‌های نقش پایه به عنوان نقطه شروع کپی می‌شوند.' : 'Copy permissions from an existing role as a starting point.'}
-              </p>
-              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-                {BUILTIN_ROLES.map(br => {
-                  const Icon = br.icon;
-                  return (
+      {/* Create / Edit form dialog */}
+      <FormDialogRoot open={showForm} onOpenChange={setShowForm}>
+        <FormDialogContent className="max-w-lg">
+          <FormDialogHeader>
+            <FormDialogTitle>{editingRole ? (fa ? 'ویرایش نقش' : 'Edit Role') : (fa ? 'ساخت نقش' : 'Create Role')}</FormDialogTitle>
+          </FormDialogHeader>
+          <FormDialogBody>
+            <form id="role-form" onSubmit={e => { e.preventDefault(); if (editingRole) { updateMutation.mutate({ roleId: editingRole, name: formName, description: formDesc || undefined, permissions: Array.from(formPerms) }); } else { createMutation.mutate(); } }} className="space-y-4">
+              {/* Base role picker */}
+              <div className="space-y-2">
+                <Label>{fa ? 'نقش پایه (اختیاری)' : 'Base role (optional)'}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {fa ? 'دسترسی‌های نقش پایه به عنوان نقطه شروع کپی می‌شوند.' : 'Copy permissions from an existing role as a starting point.'}
+                </p>
+                <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
+                  {BUILTIN_ROLES.map(br => {
+                    const Icon = br.icon;
+                    return (
+                      <button
+                        key={br.id}
+                        type="button"
+                        onClick={() => applyBaseRole(baseRoleId === br.id ? null : br.id)}
+                        className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-start transition ${
+                          baseRoleId === br.id
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 ring-1 ring-indigo-300 dark:ring-indigo-700'
+                            : 'hover:bg-accent text-muted-foreground'
+                        }`}
+                      >
+                        <Icon size={12} />
+                        <span className="truncate">{fa ? br.nameKey.fa : br.nameKey.en}</span>
+                      </button>
+                    );
+                  })}
+                  {roles.map(role => (
                     <button
-                      key={br.id}
+                      key={role.id}
                       type="button"
-                      onClick={() => applyBaseRole(baseRoleId === br.id ? null : br.id)}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-start transition ${
-                        baseRoleId === br.id
+                      onClick={() => applyBaseRole(baseRoleId === role.id ? null : role.id)}
+                      className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-start transition ${
+                        baseRoleId === role.id
                           ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 ring-1 ring-indigo-300 dark:ring-indigo-700'
                           : 'hover:bg-accent text-muted-foreground'
                       }`}
                     >
-                      <Icon size={14} />
-                      <span className="truncate">{fa ? br.nameKey.fa : br.nameKey.en}</span>
+                      <ShieldPlus size={12} />
+                      <span className="truncate">{role.name}</span>
                     </button>
-                  );
-                })}
-                {roles.map(role => (
-                  <button
-                    key={role.id}
-                    type="button"
-                    onClick={() => applyBaseRole(baseRoleId === role.id ? null : role.id)}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-start transition ${
-                      baseRoleId === role.id
-                        ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 ring-1 ring-indigo-300 dark:ring-indigo-700'
-                        : 'hover:bg-accent text-muted-foreground'
-                    }`}
-                  >
-                    <ShieldPlus size={14} />
-                    <span className="truncate">{role.name}</span>
-                  </button>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role-name">{fa ? 'نام' : 'Name'}</Label>
-              <Input
-                id="role-name"
-                value={formName}
-                onChange={e => setFormName(e.target.value)}
-                placeholder={fa ? 'مثلاً: مسئول مالی' : 'e.g. Finance Manager'}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="role-name">{fa ? 'نام' : 'Name'}</Label>
+                <Input
+                  id="role-name"
+                  value={formName}
+                  onChange={(e: { target: { value: SetStateAction<string>; }; }) => setFormName(e.target.value)}
+                  placeholder={fa ? 'مثلاً: مسئول مالی' : 'e.g. Finance Manager'}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role-desc">{fa ? 'توضیحات' : 'Description'}</Label>
-              <Input
-                id="role-desc"
-                value={formDesc}
-                onChange={e => setFormDesc(e.target.value)}
-                placeholder={fa ? 'توضیح کوتاه (اختیاری)' : 'Short description (optional)'}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="role-desc">{fa ? 'توضیحات' : 'Description'}</Label>
+                <Input
+                  id="role-desc"
+                  value={formDesc}
+                  onChange={(e: { target: { value: SetStateAction<string>; }; }) => setFormDesc(e.target.value)}
+                  placeholder={fa ? 'توضیح کوتاه (اختیاری)' : 'Short description (optional)'}
+                />
+              </div>
 
-            <div className="space-y-3">
-              <Label>{fa ? 'دسترسی‌ها' : 'Permissions'}</Label>
-              {groups.map(group => {
-                const groupPerms = registry.filter(p => p.group === group);
-                const selectedCount = groupPerms.filter(p => formPerms.has(p.key)).length;
-                const allSelected = selectedCount === groupPerms.length;
-                const someSelected = selectedCount > 0 && !allSelected;
-                return (
-                  <div key={group} className="space-y-1">
-                    <button
-                      type="button"
-                      onClick={() => setGroup(group, !allSelected)}
-                      className={`w-full text-left flex items-center justify-between rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
-                        allSelected ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : someSelected ? 'text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/10' : 'text-muted-foreground hover:bg-accent'
-                      }`}
-                    >
-                      <span>{group}</span>
-                      <span className="text-[10px]">{selectedCount}/{groupPerms.length}</span>
-                    </button>
-                    <div className="grid gap-0.5 ps-2">
-                      {groupPerms.map(perm => {
-                        const selected = formPerms.has(perm.key);
-                        return (
-                          <button
-                            key={perm.key}
-                            type="button"
-                            onClick={() => togglePerm(perm.key)}
-                            className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition text-start ${
-                              selected
-                                ? 'text-green-700 bg-green-50 dark:bg-green-900/20 dark:text-green-400'
-                                : 'text-muted-foreground hover:bg-accent'
-                            }`}
-                          >
-                            <span className="text-xs">{fa ? perm.label.fa : perm.label.en}</span>
-                            <span className="text-[10px] opacity-60 hidden sm:inline">{fa ? perm.description.fa : perm.description.en}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-border">
-              <Button variant="secondary" onClick={resetForm}>
+              <div className="space-y-2">
+                <Label>{fa ? 'دسترسی‌ها' : 'Permissions'}</Label>
+                <div className="max-h-60 overflow-y-auto space-y-2 rounded-lg border border-border p-2">
+                  {groups.map(group => {
+                    const groupPerms = registry.filter(p => p.group === group);
+                    const selectedCount = groupPerms.filter(p => formPerms.has(p.key)).length;
+                    const allSelected = selectedCount === groupPerms.length;
+                    const someSelected = selectedCount > 0 && !allSelected;
+                    return (
+                      <div key={group} className="space-y-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setGroup(group, !allSelected)}
+                          className={`w-full text-left flex items-center justify-between rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wider transition ${
+                            allSelected ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20' : someSelected ? 'text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/10' : 'text-muted-foreground hover:bg-accent'
+                          }`}
+                        >
+                          <span>{group}</span>
+                          <span className="text-[10px]">{selectedCount}/{groupPerms.length}</span>
+                        </button>
+                        <div className="grid gap-0.5 ps-2">
+                          {groupPerms.map(perm => {
+                            const selected = formPerms.has(perm.key);
+                            return (
+                              <button
+                                key={perm.key}
+                                type="button"
+                                onClick={() => togglePerm(perm.key)}
+                                className={`flex items-center justify-between rounded-lg px-2 py-1 text-sm transition text-start ${
+                                  selected
+                                    ? 'text-green-700 bg-green-50 dark:bg-green-900/20 dark:text-green-400'
+                                    : 'text-muted-foreground hover:bg-accent'
+                                }`}
+                              >
+                                <span className="text-xs">{fa ? perm.label.fa : perm.label.en}</span>
+                                <span className="text-[10px] opacity-60 hidden sm:inline">{fa ? perm.description.fa : perm.description.en}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </form>
+          </FormDialogBody>
+          <FormDialogFooter>
+            <FormDialogClose asChild>
+              <Button type="button" variant="secondary" onClick={resetForm}>
                 {fa ? 'لغو' : 'Cancel'}
               </Button>
-              <Button
-                loading={createMutation.isPending || updateMutation.isPending}
-                disabled={!formName.trim()}
-                onClick={() => {
-                  if (editingRole) {
-                    updateMutation.mutate({ roleId: editingRole, name: formName, description: formDesc || null, permissions: Array.from(formPerms) });
-                  } else {
-                    createMutation.mutate();
-                  }
-                }}
-              >
-                <Save size={16} className="me-1.5" />
-                {editingRole ? (fa ? 'ذخیره' : 'Save') : (fa ? 'ایجاد' : 'Create')}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </FormDialogClose>
+            <Button
+              type="submit"
+              form="role-form"
+              loading={createMutation.isPending || updateMutation.isPending}
+              disabled={!formName.trim()}
+            >
+              <Save size={16} className="me-1" />
+              {editingRole ? (fa ? 'ذخیره' : 'Save') : (fa ? 'ایجاد' : 'Create')}
+            </Button>
+          </FormDialogFooter>
+        </FormDialogContent>
+      </FormDialogRoot>
 
       {/* Built-in roles */}
       <div className="space-y-2">

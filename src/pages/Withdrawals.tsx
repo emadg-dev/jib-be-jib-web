@@ -22,8 +22,6 @@ import { PageSkeleton } from '../components/Skeleton';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
   Table,
   Thead,
   Tbody,
@@ -36,6 +34,15 @@ import {
   Select,
   Checkbox,
 } from '../components/ui/core';
+import {
+  FormDialogRoot,
+  FormDialogContent,
+  FormDialogHeader,
+  FormDialogTitle,
+  FormDialogBody,
+  FormDialogFooter,
+  FormDialogClose,
+} from '../components/ui/FormDialog';
 
 type Shares = Record<string, string>;
 
@@ -342,42 +349,36 @@ export default function Withdrawals() {
       )}
 
       {canCreate && !showForm && !editing && (
-        <Button onClick={() => setShowForm(true)} className="w-full">
-          <Plus size={18} className="me-1" />
+        <Button onClick={() => setShowForm(true)} >
+          <Plus size={16} className="me-1" />
           {fa ? 'ثبت خرج جدید' : 'Record new expense'}
         </Button>
       )}
 
-      {(canCreate || canUpdate) && (showForm || editing) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
+      <FormDialogRoot open={showForm || !!editing} onOpenChange={(open) => { if (!open) clear(); }}>
+        <FormDialogContent className="max-w-lg">
+          <FormDialogHeader>
+            <FormDialogTitle>
               {editing
-                ? fa
-                  ? 'ویرایش خرج'
-                  : 'Edit expense'
-                : fa
-                  ? 'یه خرج جدید ثبت کن'
-                  : 'Record expense'}
-            </CardTitle>
-          </CardHeader>
+                ? fa ? 'ویرایش خرج' : 'Edit expense'
+                : fa ? 'یه خرج جدید ثبت کن' : 'Record expense'}
+            </FormDialogTitle>
+          </FormDialogHeader>
 
-          <CardContent>
-            <form
-              onSubmit={submit}
-              className="space-y-5"
-            >
+          <FormDialogBody>
+            <form id="withdrawal-form" onSubmit={submit} className="space-y-3">
               {formError && (
-                <div className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                <div className="rounded-xl bg-rose-50 p-2 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
                   {formError}
                 </div>
               )}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                <div>
-                  <Label htmlFor="withdrawal-description">
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+                <div className="sm:col-span-2">
+                  <Label htmlFor="withdrawal-description" className="text-xs">
                     {fa ? 'توضیحات' : 'Description'}
                   </Label>
-
                   <Input
                     id="withdrawal-description"
                     value={description}
@@ -389,10 +390,9 @@ export default function Withdrawals() {
                 </div>
 
                 <div>
-                  <Label htmlFor="withdrawal-category">
+                  <Label htmlFor="withdrawal-category" className="text-xs">
                     {fa ? 'دسته‌بندی' : 'Category'}
                   </Label>
-
                   <Select
                     id="withdrawal-category"
                     value={category}
@@ -402,16 +402,10 @@ export default function Withdrawals() {
                     required
                   >
                     <option value="">
-                      {fa
-                        ? 'یه دسته انتخاب کن'
-                        : 'Select category'}
+                      {fa ? 'یه دسته انتخاب کن' : 'Select category'}
                     </option>
-
                     {categories.map((item) => (
-                      <option
-                        key={item.value}
-                        value={item.value}
-                      >
+                      <option key={item.value} value={item.value}>
                         {item.label}
                       </option>
                     ))}
@@ -419,11 +413,10 @@ export default function Withdrawals() {
                 </div>
 
                 <div>
-                  <Label htmlFor="withdrawal-amount">
+                  <Label htmlFor="withdrawal-amount" className="text-xs">
                     {fa ? 'مبلغ کل' : 'Total amount'}
                   </Label>
-
-    <Input
+                  <Input
                     id="withdrawal-amount"
                     type="text"
                     inputMode="decimal"
@@ -435,15 +428,16 @@ export default function Withdrawals() {
                   />
                 </div>
 
+                
                 <div>
-                  <Label htmlFor="withdrawal-date">
+                  <Label htmlFor="withdrawal-date" className="text-xs">
                     {fa ? 'تاریخ' : 'Date'}
                   </Label>
                   <JalaliDatePicker id="withdrawal-date" value={date} onChange={(iso: string) => setDate(iso)} />
                 </div>
 
-                <div>
-                  <Label htmlFor="withdrawal-paid-by">
+                <div className="sm:col-span-2">
+                  <Label htmlFor="withdrawal-paid-by" className="text-xs">
                     {fa ? 'پرداخت توسط' : 'Paid by'}
                   </Label>
                   <Select
@@ -462,7 +456,7 @@ export default function Withdrawals() {
                       </option>
                     ))}
                   </Select>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {paidBy
                       ? (fa ? 'مبلغ توسط این عضو پرداخت شده و بانک به او بدهکار است.' : 'Paid by this member — bank owes them this amount.')
                       : (fa ? 'هزینه از حساب بانک پرداخت شده.' : 'Expense paid from the bank.')}
@@ -472,33 +466,24 @@ export default function Withdrawals() {
 
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label className="mb-0">
+                  <Label className="mb-0 text-xs">
                     {fa ? 'افرادی که استفاده کردن' : 'Beneficiaries'}
                   </Label>
-
                   <Checkbox
-                    checked={
-                      active.length > 0 &&
-                      selected.length === active.length
-                    }
+                    checked={active.length > 0 && selected.length === active.length}
                     onChange={() => {
-                      const next =
-                        selected.length === active.length
-                          ? []
-                          : active.map((member) => member.id);
+                      const next = selected.length === active.length
+                        ? []
+                        : active.map((member) => member.id);
                       setSelected(next);
-                      setShares((s) =>
-                        distribute(Number(amount) || 0, next, s)
-                      );
+                      setShares((s) => distribute(Number(amount) || 0, next, s));
                     }}
                   >
-                    {fa
-                      ? 'همه اعضای فعال'
-                      : 'All active members'}
+                    {fa ? 'همه اعضای فعال' : 'All active'}
                   </Checkbox>
                 </div>
 
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {fa
                     ? 'اگه سهم کسی رو وارد نکنی، باقی مبلغ مساوی تقسیم میشه.'
                     : 'Leave a share blank to split the remainder equally.'}
@@ -508,35 +493,29 @@ export default function Withdrawals() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="mt-3"
+                  className="mt-2"
                   disabled={!selected.length || !(parseMoney(amount) > 0)}
                   onClick={distributeEvenly}
                 >
                   {fa ? 'تقسیم مساوی' : 'Distribute evenly'}
                 </Button>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-2">
                   {active.map((member) => {
                     const on = selected.includes(member.id);
                     return (
                       <div
                         key={member.id}
-                        className={`flex items-center gap-3 rounded-xl border bg-card p-3 shadow-sm transition-colors ${
+                        className={`flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-sm transition-colors ${
                           on
-                            ? 'border-primary/40 ring-1 ring-primary/20'
+                            ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/20'
                             : 'border-border opacity-80'
                         }`}
                       >
-                        <Checkbox
-                          checked={on}
-                          onChange={() =>
-                            toggle(member.id)
-                          }
-                        />
-                        <span className="flex-1 text-sm font-medium text-foreground">
+                        <Checkbox checked={on} onChange={() => toggle(member.id)} />
+                        <span className="min-w-0 flex-1 font-medium text-foreground text-xs">
                           {member.display_name || member.name}
                         </span>
-
                         <Input
                           type="text"
                           inputMode="decimal"
@@ -546,54 +525,36 @@ export default function Withdrawals() {
                             const val = formatAmount(String(event.target.value || ''));
                             setShares((current) => {
                               const next = { ...current };
-                              if (val) {
-                                next[member.id] = val;
-                              } else {
-                                delete next[member.id];
-                              }
-                              return distribute(
-                                parseMoney(amount) || 0,
-                                selected,
-                                next
-                              );
+                              if (val) next[member.id] = val;
+                              else delete next[member.id];
+                              return distribute(parseMoney(amount) || 0, selected, next);
                             });
                           }}
-                          className="h-9 w-20 text-right"
-                          placeholder={
-                            fa ? 'سهم' : 'Share'
-                          }
+                          className="h-7 w-[80px] shrink-0 text-right text-xs"
+                          placeholder={fa ? 'سهم' : 'Share'}
                         />
                       </div>
                     );
                   })}
                 </div>
               </div>
-
-              <div className="flex gap-2">
-                <Button type="submit" loading={submitting}>
-                  {editing
-                    ? fa
-                      ? 'ذخیره تغییرات'
-                      : 'Save changes'
-                    : fa
-                      ? 'ثبت خرج'
-                      : 'Record expense'}
-                </Button>
-
-                {editing && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={clear}
-                  >
-                    {fa ? 'لغو' : 'Cancel'}
-                  </Button>
-                )}
-              </div>
             </form>
-          </CardContent>
-        </Card>
-      )}
+          </FormDialogBody>
+
+          <FormDialogFooter>
+            <FormDialogClose asChild>
+              <Button type="button" variant="secondary" onClick={clear}>
+                {fa ? 'لغو' : 'Cancel'}
+              </Button>
+            </FormDialogClose>
+            <Button type="submit" form="withdrawal-form" loading={submitting}>
+              {editing
+                ? fa ? 'ذخیره تغییرات' : 'Save changes'
+                : fa ? 'ثبت خرج' : 'Record expense'}
+            </Button>
+          </FormDialogFooter>
+        </FormDialogContent>
+      </FormDialogRoot>
 
       <Card>
         <CardContent className="pt-6">

@@ -1,4 +1,4 @@
-import { useState, type SetStateAction } from 'react';
+import { useState } from 'react';
 import { translateError } from '../utils/translations';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Pencil } from 'lucide-react';
@@ -8,9 +8,16 @@ import { useConfirm } from '../components/ConfirmDialog';
 import { usePermissions } from '../hooks/usePermissions';
 import type { Trip } from '../api/services';
 import {
+  FormDialogRoot,
+  FormDialogContent,
+  FormDialogHeader,
+  FormDialogTitle,
+  FormDialogBody,
+  FormDialogFooter,
+  FormDialogClose,
+} from '../components/ui/FormDialog';
+import {
   Button,
-  Card,
-  CardContent,
   Input,
   Label,
 } from '../components/ui/core';
@@ -50,7 +57,7 @@ export default function TripPicker() {
   const [name, setName] = useState('');
   const [currency, setCurrency] = useState('USD');
   const [editing, setEditing] = useState<Trip | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const active = trips.filter((t) => t.active !== false);
@@ -59,7 +66,7 @@ export default function TripPicker() {
     setName('');
     setCurrency('USD');
     setEditing(null);
-    setCreating(false);
+    setShowForm(false);
   };
 
   const choose = async (id: string) => {
@@ -75,8 +82,8 @@ export default function TripPicker() {
   const beginEdit = (trip: Trip) => {
     setName(trip.name);
     setCurrency(trip.currency);
-    setCreating(false);
     setEditing(trip);
+    setShowForm(true);
   };
 
   const deleteCurrentTrip = async (id: string) => {
@@ -140,35 +147,29 @@ export default function TripPicker() {
       )}
 
       {/* Create / Edit form */}
-      {(creating || editing) && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="mb-4 text-lg font-semibold text-indigo-600 mt-2">
+      <FormDialogRoot open={showForm} onOpenChange={(open) => { if (!open) resetForm(); }}>
+        <FormDialogContent>
+          <FormDialogHeader>
+            <FormDialogTitle>
               {editing
-                ? fa
-                  ? `ویرایش ${editing.name}`
-                  : `Edit ${editing.name}`
-                : fa
-                  ? 'سفر جدید'
-                  : 'New trip'}
-            </p>
-            <form onSubmit={save} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                ? fa ? 'ویرایش سفر' : 'Edit Trip'
+                : fa ? 'ساخت سفر' : 'Create Trip'}
+            </FormDialogTitle>
+          </FormDialogHeader>
+          <FormDialogBody>
+            <form id="trip-form" onSubmit={save} className="grid grid-cols-1 gap-4">
               <div>
-                <Label htmlFor="trip-name">
-                  {fa ? 'اسم سفر' : 'Trip name'}
-                </Label>
+                <Label htmlFor="trip-name">{fa ? 'اسم سفر' : 'Trip name'}</Label>
                 <Input
                   id="trip-name"
                   value={name}
                   placeholder={fa ? 'مثلاً سفر شمال' : 'e.g. Summer trip'}
-                  onChange={(e: { target: { value: SetStateAction<string>; }; }) => setName(e.target.value)}
+                  onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setName(e.target.value)}
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="trip-currency">
-                  {fa ? 'واحد پول' : 'Currency'}
-                </Label>
+                <Label htmlFor="trip-currency">{fa ? 'واحد پول' : 'Currency'}</Label>
                 <Input
                   id="trip-currency"
                   value={currency}
@@ -178,23 +179,25 @@ export default function TripPicker() {
                   required
                 />
               </div>
-              <div className="flex gap-2 sm:col-span-2">
-                <Button type="submit" loading={busy} disabled={busy}>
-                  {editing
-                    ? fa ? 'ذخیره تغییرات' : 'Save changes'
-                    : fa ? 'ساخت سفر' : 'Create trip'}
-                </Button>
-                <Button type="button" variant="secondary" onClick={resetForm}>
-                  {fa ? 'لغو' : 'Cancel'}
-                </Button>
-              </div>
             </form>
-          </CardContent>
-        </Card>
-      )}
+          </FormDialogBody>
+          <FormDialogFooter>
+            <FormDialogClose asChild>
+              <Button type="button" variant="secondary" onClick={resetForm}>
+                {fa ? 'لغو' : 'Cancel'}
+              </Button>
+            </FormDialogClose>
+            <Button type="submit" form="trip-form" loading={busy} disabled={busy}>
+              {editing
+                ? fa ? 'ذخیره' : 'Save'
+                : fa ? 'ساخت' : 'Create'}
+            </Button>
+          </FormDialogFooter>
+        </FormDialogContent>
+      </FormDialogRoot>
 
       {/* Trip cards */}
-      {active.length === 0 && !creating ? (
+      {active.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center">
           <h3 className="text-lg font-semibold">
             {fa ? 'هنوز سفری وجود ندارد' : 'No trips yet'}
@@ -205,7 +208,7 @@ export default function TripPicker() {
               : 'Create your first trip to start tracking expenses.'}
           </p>
           {canCreateTrip && (
-            <Button className="mt-4" onClick={() => { resetForm(); setCreating(true); }}>
+            <Button className="mt-4" onClick={() => { resetForm(); setShowForm(true); }}>
               <Plus size={16} className="me-1.5" />
               {fa ? 'ساخت سفر' : 'Create trip'}
             </Button>
@@ -262,9 +265,9 @@ export default function TripPicker() {
           ))}
 
           {/* Add new trip card */}
-          {canCreateTrip && !creating && (
+          {canCreateTrip && (
             <button
-              onClick={() => { resetForm(); setCreating(true); }}
+              onClick={() => { resetForm(); setShowForm(true); }}
               className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card/30 p-5 text-muted-foreground transition hover:border-indigo-300 hover:bg-indigo-500/5 hover:text-indigo-600"
             >
               <Plus size={24} />
