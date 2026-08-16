@@ -302,14 +302,14 @@ function RatingsStatsView({ fa }: { fa: boolean }) {
         </h3>
         <div className="grid gap-2 sm:grid-cols-2">
           <StatCard
-            title={fa ? 'بهترین امتیاز کل' : 'Highest Overall'}
+            title={fa ? 'بهترین بهترین‌ها' : 'Highest Overall'}
             names={highestOverall.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(highestOverallVal)} ${highestOverallVal.toFixed(1)}`}
             color="bg-amber-100 dark:bg-amber-900/30"
             icon={<Trophy size={18} className="text-amber-600" />}
           />
           <StatCard
-            title={fa ? 'پایین‌ترین امتیاز کل' : 'Lowest Overall'}
+            title={fa ? 'نیازمندترین به تلاش بیشتر' : 'Lowest Overall'}
             names={lowestOverall.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(lowestOverallVal)} ${lowestOverallVal.toFixed(1)}`}
             color="bg-red-50 dark:bg-red-900/20"
@@ -323,7 +323,7 @@ function RatingsStatsView({ fa }: { fa: boolean }) {
             icon={<Crown size={18} className="text-emerald-600" />}
           />
           <StatCard
-            title={fa ? 'کمترین اخلاق' : 'Lowest Ethics'}
+            title={fa ? 'بداخلاق‌ترین' : 'Lowest Ethics'}
             names={lowestEthics.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(lowestEthicsVal)} ${lowestEthicsVal.toFixed(1)}`}
             color="bg-rose-50 dark:bg-rose-900/20"
@@ -337,7 +337,7 @@ function RatingsStatsView({ fa }: { fa: boolean }) {
             icon={<Medal size={18} className="text-sky-600" />}
           />
           <StatCard
-            title={fa ? 'کمترین مشارکت' : 'Lowest Participation'}
+            title={fa ? 'تنبل ترین' : 'Lowest Participation'}
             names={lowestParticipation.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(lowestParticipationVal)} ${lowestParticipationVal.toFixed(1)}`}
             color="bg-rose-50 dark:bg-rose-900/20"
@@ -351,7 +351,7 @@ function RatingsStatsView({ fa }: { fa: boolean }) {
             icon={<Star size={18} className="text-teal-600" />}
           />
           <StatCard
-            title={fa ? 'کمترین انعطاف' : 'Lowest Flexibility'}
+            title={fa ? 'چوب‌ خشک ترین' : 'Lowest Flexibility'}
             names={lowestFlexibility.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(lowestFlexibilityVal)} ${lowestFlexibilityVal.toFixed(1)}`}
             color="bg-rose-50 dark:bg-rose-900/20"
@@ -368,14 +368,14 @@ function RatingsStatsView({ fa }: { fa: boolean }) {
         </h3>
         <div className="grid gap-2 sm:grid-cols-2">
           <StatCard
-            title={fa ? 'سخاوتمندترین' : 'Most Generous'}
+            title={fa ? 'دست‌ودل باز ترین' : 'Most Generous'}
             names={mostGenerous.map(s => ({ name: s.name, avatar: s.avatar }))}
             value=""
             color="bg-green-100 dark:bg-green-900/30"
             icon={<TrendingDown size={18} className="text-green-600 -rotate-90" />}
           />
           <StatCard
-            title={fa ? 'سخت‌گیرترین' : 'Strictest'}
+            title={fa ? 'خسیس ترین' : 'Strictest'}
             names={strictest.map(s => ({ name: s.name, avatar: s.avatar }))}
             value=""
             color="bg-red-50 dark:bg-red-900/20"
