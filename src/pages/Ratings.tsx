@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button, Table, Thead, Tbody, 
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
-import { Star, Check, ArrowLeft, Eye, Trash2 } from 'lucide-react';
+import { Star, Check, ArrowLeft, Eye, Users, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '../components/Avatar';
 import { PageSkeleton } from '../components/Skeleton';
@@ -146,6 +146,103 @@ function AllRatingsView({ fa, isAdminOrOwner }: { fa: boolean; isAdminOrOwner: b
   );
 }
 
+function RatingsReceivedView({ fa }: { fa: boolean }) {
+  const { data: allRatingsRes, isLoading } = useQuery({
+    queryKey: ['ratings', 'all'],
+    queryFn: ratingsApi.getAll,
+  });
+
+  if (isLoading) return <PageSkeleton />;
+
+  const allRatings: AllRating[] = allRatingsRes?.data || [];
+
+  if (allRatings.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        {fa ? 'هنوز ارزیابی ثبت نشده است.' : 'No ratings submitted yet.'}
+      </p>
+    );
+  }
+
+  const bar = (val: number) => '★'.repeat(Math.round(val)) + '☆'.repeat(5 - Math.round(val));
+
+  const groupedByRatee = allRatings.reduce<Record<string, { name: string; avatar: string | null; ratings: AllRating[] }>>((acc, r) => {
+    if (!acc[r.ratee_id]) {
+      acc[r.ratee_id] = { name: r.ratee_name, avatar: r.ratee_avatar, ratings: [] };
+    }
+    acc[r.ratee_id].ratings.push(r);
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-4">
+      {Object.entries(groupedByRatee).map(([rateeId, group]) => {
+        const avgEthics = group.ratings.reduce((s, r) => s + r.ethics, 0) / group.ratings.length;
+        const avgParticipation = group.ratings.reduce((s, r) => s + r.participation, 0) / group.ratings.length;
+        const avgFlexibility = group.ratings.reduce((s, r) => s + r.flexibility, 0) / group.ratings.length;
+        const avgOverall = (avgEthics + avgParticipation + avgFlexibility) / 3;
+
+        return (
+          <Card key={rateeId} className="shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Avatar src={group.avatar} name={group.name} size={28} />
+                  {group.name}
+                </CardTitle>
+                <span className="text-sm font-semibold text-amber-600">
+                  {bar(avgOverall)} {avgOverall.toFixed(1)}
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="rounded-lg bg-indigo-50 p-2 dark:bg-indigo-900/20">
+                  <p className="text-muted-foreground">{fa ? 'اخلاق' : 'Ethics'}</p>
+                  <p className="font-bold text-indigo-600">{avgEthics.toFixed(1)}</p>
+                </div>
+                <div className="rounded-lg bg-cyan-50 p-2 dark:bg-cyan-900/20">
+                  <p className="text-muted-foreground">{fa ? 'مشارکت' : 'Participation'}</p>
+                  <p className="font-bold text-cyan-600">{avgParticipation.toFixed(1)}</p>
+                </div>
+                <div className="rounded-lg bg-emerald-50 p-2 dark:bg-emerald-900/20">
+                  <p className="text-muted-foreground">{fa ? 'انعطاف' : 'Flexibility'}</p>
+                  <p className="font-bold text-emerald-600">{avgFlexibility.toFixed(1)}</p>
+                </div>
+              </div>
+              <Table>
+                <Thead>
+                  <Tr>
+                    <Th>{fa ? 'ارزیاب' : 'Rater'}</Th>
+                    <Th>{fa ? 'اخلاق' : 'Ethics'}</Th>
+                    <Th>{fa ? 'مشارکت' : 'Participation'}</Th>
+                    <Th>{fa ? 'انعطاف' : 'Flexibility'}</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {group.ratings.map((r) => (
+                    <Tr key={r.rater_id}>
+                      <Td className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Avatar src={r.rater_avatar} name={r.rater_name} size={24} />
+                          {r.rater_name}
+                        </div>
+                      </Td>
+                      <Td>{r.ethics}</Td>
+                      <Td>{r.participation}</Td>
+                      <Td>{r.flexibility}</Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Ratings() {
   const { language } = usePreferences();
   const fa = language === 'fa';
@@ -154,7 +251,7 @@ export default function Ratings() {
   const queryClient = useQueryClient();
 
   const isAdminOrOwner = user?.role === 'owner' || user?.role === 'admin';
-  const [tab, setTab] = useState<'rate' | 'view'>('rate');
+  const [tab, setTab] = useState<'rate' | 'view' | 'received'>('rate');
   const [selectedRatee, setSelectedRatee] = useState<Ratee | null>(null);
   const [scores, setScores] = useState<{ ethics: number | null; participation: number | null; flexibility: number | null }>({
     ethics: null,
@@ -310,7 +407,18 @@ export default function Ratings() {
             }`}
           >
             <Eye size={16} />
-            {fa ? 'مشاهده همه' : 'View All'}
+            {fa ? 'ارزیابی‌ها' : 'Given'}
+          </button>
+          <button
+            onClick={() => setTab('received')}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+              tab === 'received'
+                ? 'bg-primary text-primary-foreground shadow'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+            }`}
+          >
+            <Users size={16} />
+            {fa ? 'دریافتی' : 'Received'}
           </button>
         </div>
       )}
@@ -353,8 +461,10 @@ export default function Ratings() {
             </button>
           ))}
         </div>
-      ) : (
+      ) : tab === 'view' ? (
         <AllRatingsView fa={fa} isAdminOrOwner={isAdminOrOwner} />
+      ) : (
+        <RatingsReceivedView fa={fa} />
       )}
     </div>
   );
