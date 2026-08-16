@@ -1,4 +1,5 @@
 import { useState, type SetStateAction } from 'react';
+import { translateError } from '../utils/translations';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LayoutGrid, List, Plus } from 'lucide-react';
 import Avatar from '../components/Avatar';
@@ -64,6 +65,16 @@ export default function Withdrawals() {
     queryFn: membersApi.getAll,
   });
 
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const showSuccess = (msg: string) => { setMessage(msg); setError(''); };
+  const showError = (err: any) => {
+    const raw = err?.message || 'Something went wrong';
+    setError(translateError(raw, fa));
+    setMessage('');
+  };
+
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [amount, setAmount] = useState('');
@@ -77,6 +88,7 @@ export default function Withdrawals() {
     typeof window !== 'undefined' && window.innerWidth >= 768 ? 'table' : 'card'
   );
   const [showForm, setShowForm] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const active =
     members?.data?.filter((member) => member.active !== false) || [];
@@ -101,6 +113,7 @@ export default function Withdrawals() {
     setShares({});
     setEditing(null);
     setShowForm(false);
+    setFormError('');
   };
 
   const create = useMutation({
@@ -108,7 +121,9 @@ export default function Withdrawals() {
     onSuccess: () => {
       refresh();
       clear();
+      showSuccess(fa ? 'خرج با موفقیت ثبت شد.' : 'Expense recorded successfully.');
     },
+    onError: (err: any) => showError(err),
   });
 
   const update = useMutation({
@@ -117,12 +132,18 @@ export default function Withdrawals() {
     onSuccess: () => {
       refresh();
       clear();
+      showSuccess(fa ? 'خرج با موفقیت ویرایش شد.' : 'Expense updated successfully.');
     },
+    onError: (err: any) => showError(err),
   });
 
   const remove = useMutation({
     mutationFn: withdrawalsApi.delete,
-    onSuccess: refresh,
+    onSuccess: () => {
+      refresh();
+      showSuccess(fa ? 'خرج با موفقیت حذف شد.' : 'Expense deleted successfully.');
+    },
+    onError: (err: any) => showError(err),
   });
 
   const toggle = (id: string) => {
@@ -161,11 +182,12 @@ export default function Withdrawals() {
       entered > total ||
       (!blank.length && Math.abs(entered - total) > 0.01)
     ) {
-      return alert(
+      setFormError(
         fa
           ? 'سهم هر نفر باید با مبلغ کل برابر باشه.'
           : 'Beneficiary shares must equal the total amount.'
       );
+      return;
     }
 
     const equal = blank.length
@@ -308,6 +330,17 @@ export default function Withdrawals() {
         </p>
       </div>
 
+      {message && (
+        <div className="rounded-xl bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-400">
+          {message}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+          {error}
+        </div>
+      )}
+
       {canCreate && !showForm && !editing && (
         <Button onClick={() => setShowForm(true)} className="w-full">
           <Plus size={18} className="me-1" />
@@ -334,7 +367,12 @@ export default function Withdrawals() {
               onSubmit={submit}
               className="space-y-5"
             >
-               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {formError && (
+                <div className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                  {formError}
+                </div>
+              )}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 <div>
                   <Label htmlFor="withdrawal-description">
                     {fa ? 'توضیحات' : 'Description'}
@@ -545,7 +583,7 @@ export default function Withdrawals() {
                 {editing && (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="secondary"
                     onClick={clear}
                   >
                     {fa ? 'لغو' : 'Cancel'}
@@ -576,7 +614,11 @@ export default function Withdrawals() {
             </button>
           </div>
 
-          {viewMode === 'table' ? (
+          {withdrawals?.data?.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              {fa ? 'هنوز خرجی ثبت نشده.' : 'No expenses recorded yet.'}
+            </p>
+          ) : viewMode === 'table' ? (
             <Table className="w-full">
               <Thead>
                 <Tr>

@@ -2,7 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { rolesApi, permissionsApi, type TripRole, type PermissionDefinition } from '../api/services';
 import { Card, CardContent, Button, Input, Label } from '../components/ui/core';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { useConfirm } from '../components/ConfirmDialog';
 import { useState } from 'react';
+import { translateError } from '../utils/translations';
 import { ShieldPlus, X, Trash2, Save, Edit3, Crown, User, ChevronDown, ChevronUp } from 'lucide-react';
 import { PageSkeleton } from '../components/Skeleton';
 
@@ -15,6 +17,17 @@ export default function RolesPage() {
   const { language } = usePreferences();
   const fa = language === 'fa';
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
+
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const showSuccess = (msg: string) => { setMessage(msg); setError(''); };
+  const showError = (err: any) => {
+    const raw = err?.message || 'Something went wrong';
+    setError(translateError(raw, fa));
+    setMessage('');
+  };
 
   const [editingRole, setEditingRole] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -70,7 +83,9 @@ export default function RolesPage() {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       queryClient.invalidateQueries({ queryKey: ['roles', 'permissions'] });
       resetForm();
+      showSuccess(fa ? 'نقش با موفقیت ایجاد شد.' : 'Role created successfully.');
     },
+    onError: (err: any) => showError(err),
   });
 
   const updateMutation = useMutation({
@@ -80,7 +95,9 @@ export default function RolesPage() {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       queryClient.invalidateQueries({ queryKey: ['roles', 'permissions'] });
       resetForm();
+      showSuccess(fa ? 'نقش با موفقیت ویرایش شد.' : 'Role updated successfully.');
     },
+    onError: (err: any) => showError(err),
   });
 
   const deleteMutation = useMutation({
@@ -88,7 +105,9 @@ export default function RolesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       queryClient.invalidateQueries({ queryKey: ['roles', 'permissions'] });
+      showSuccess(fa ? 'نقش با موفقیت حذف شد.' : 'Role deleted successfully.');
     },
+    onError: (err: any) => showError(err),
   });
 
   const resetForm = () => {
@@ -127,7 +146,7 @@ export default function RolesPage() {
     });
   };
 
-  if (loadingRoles) return <PageSkeleton />;
+  if (loadingRoles) return <div dir={fa ? 'rtl' : 'ltr'}><PageSkeleton /></div>;
 
   return (
     <div dir={fa ? 'rtl' : 'ltr'} className="space-y-6">
@@ -149,6 +168,17 @@ export default function RolesPage() {
           </Button>
         )}
       </div>
+
+      {message && (
+        <div className="rounded-xl bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-400">
+          {message}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+          {error}
+        </div>
+      )}
 
       {/* Create / Edit form */}
       {(showCreate || editingRole) && (
@@ -207,8 +237,9 @@ export default function RolesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>{fa ? 'نام' : 'Name'}</Label>
+              <Label htmlFor="role-name">{fa ? 'نام' : 'Name'}</Label>
               <Input
+                id="role-name"
                 value={formName}
                 onChange={e => setFormName(e.target.value)}
                 placeholder={fa ? 'مثلاً: مسئول مالی' : 'e.g. Finance Manager'}
@@ -216,8 +247,9 @@ export default function RolesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>{fa ? 'توضیحات' : 'Description'}</Label>
+              <Label htmlFor="role-desc">{fa ? 'توضیحات' : 'Description'}</Label>
               <Input
+                id="role-desc"
                 value={formDesc}
                 onChange={e => setFormDesc(e.target.value)}
                 placeholder={fa ? 'توضیح کوتاه (اختیاری)' : 'Short description (optional)'}
@@ -366,8 +398,11 @@ export default function RolesPage() {
                     <Edit3 size={16} />
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm(fa ? 'این نقش حذف شود؟' : 'Delete this role?')) {
+                    onClick={async () => {
+                      if (await confirm(
+                        fa ? 'حذف نقش' : 'Delete role',
+                        fa ? 'این نقش حذف شود؟' : 'Delete this role?'
+                      )) {
                         deleteMutation.mutate(role.id);
                       }
                     }}

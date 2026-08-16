@@ -1,4 +1,5 @@
 import { useState, type SetStateAction } from 'react';
+import { translateError } from '../utils/translations';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { LayoutGrid, List, Plus } from 'lucide-react';
 import { depositsApi, membersApi, type Deposit } from '../api/services';
@@ -42,6 +43,16 @@ export default function Deposits() {
     `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const queryClient = useQueryClient();
+
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const showSuccess = (msg: string) => { setMessage(msg); setError(''); };
+  const showError = (err: any) => {
+    const raw = err?.message || 'Something went wrong';
+    setError(translateError(raw, fa));
+    setMessage('');
+  };
 
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
@@ -87,7 +98,9 @@ export default function Deposits() {
     onSuccess: () => {
       refresh();
       clear();
-    }
+      showSuccess(fa ? 'واریزی با موفقیت ثبت شد.' : 'Deposit added successfully.');
+    },
+    onError: (err: any) => showError(err),
   });
 
 
@@ -96,13 +109,19 @@ export default function Deposits() {
     onSuccess: () => {
       refresh();
       clear();
-    }
+      showSuccess(fa ? 'واریزی با موفقیت ویرایش شد.' : 'Deposit updated successfully.');
+    },
+    onError: (err: any) => showError(err),
   });
 
 
   const remove = useMutation({
     mutationFn: depositsApi.delete,
-    onSuccess: refresh
+    onSuccess: () => {
+      refresh();
+      showSuccess(fa ? 'واریزی با موفقیت حذف شد.' : 'Deposit deleted successfully.');
+    },
+    onError: (err: any) => showError(err),
   });
 
 
@@ -148,6 +167,16 @@ export default function Deposits() {
 
       </div>
 
+      {message && (
+        <div className="rounded-xl bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-400">
+          {message}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+          {error}
+        </div>
+      )}
 
       {canCreate && !showForm && !editing && (
         <Button onClick={() => setShowForm(true)} className="w-full">
@@ -256,7 +285,7 @@ export default function Deposits() {
                 editing &&
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   onClick={clear}
                 >
                   {fa ? 'لغو' : 'Cancel'}
@@ -292,7 +321,11 @@ export default function Deposits() {
             </button>
           </div>
 
-          {viewMode === 'table' ? (
+          {deposits?.data?.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              {fa ? 'هنوز واریزی وجود ندارد.' : 'No deposits yet.'}
+            </p>
+          ) : viewMode === 'table' ? (
             <Table>
               <Thead>
                 <Tr>

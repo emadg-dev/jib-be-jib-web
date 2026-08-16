@@ -4,6 +4,7 @@ import { Card, CardContent, Button } from '../components/ui/core';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
+import { translateError } from '../utils/translations';
 import { Shield, X, ChevronDown, ChevronUp, Save, Loader2, Tag, User } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import { PageSkeleton } from '../components/Skeleton';
@@ -13,6 +14,16 @@ export default function PermissionsPage() {
   const fa = language === 'fa';
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const showSuccess = (msg: string) => { setMessage(msg); setError(''); };
+  const showError = (err: any) => {
+    const raw = err?.message || 'Something went wrong';
+    setError(translateError(raw, fa));
+    setMessage('');
+  };
 
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [localOverrides, setLocalOverrides] = useState<Record<string, Record<string, 'allow' | 'deny'>>>({});
@@ -51,7 +62,9 @@ export default function PermissionsPage() {
       queryClient.invalidateQueries({ queryKey: ['permissions'] });
       setExpandedMember(null);
       setLocalOverrides({});
+      showSuccess(fa ? 'دسترسی‌ها با موفقیت ذخیره شد.' : 'Permissions saved successfully.');
     },
+    onError: (err: any) => showError(err),
   });
 
   const assignRoleMutation = useMutation({
@@ -61,10 +74,12 @@ export default function PermissionsPage() {
       queryClient.invalidateQueries({ queryKey: ['permissions'] });
       queryClient.invalidateQueries({ queryKey: ['members'] });
       setLocalRole({});
+      showSuccess(fa ? 'نقش با موفقیت اختصاص داده شد.' : 'Role assigned successfully.');
     },
+    onError: (err: any) => showError(err),
   });
 
-  if (loadingMembers || loadingPerms) return <PageSkeleton />;
+  if (loadingMembers || loadingPerms) return <div dir={fa ? 'rtl' : 'ltr'}><PageSkeleton /></div>;
 
   const members: Member[] = membersRes?.data || [];
   const registry: PermissionDefinition[] = registryRes?.data?.permissions || [];
@@ -146,6 +161,17 @@ export default function PermissionsPage() {
             : 'Manage what each member can do in this trip.'}
         </p>
       </div>
+
+      {message && (
+        <div className="rounded-xl bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-400">
+          {message}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+          {error}
+        </div>
+      )}
 
       <div className="space-y-3">
         {nonAdminMembers.map((member) => {

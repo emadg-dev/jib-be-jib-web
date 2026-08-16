@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useState } from 'react';
+import { translateError } from '../utils/translations';
 import { Eye, EyeOff, Pencil, LayoutGrid, List, Plus } from 'lucide-react';
 import { PageSkeleton } from '../components/Skeleton';
 import Avatar from '../components/Avatar';
@@ -22,6 +23,16 @@ export default function Members() {
   const canDelete = isOwner || hasPermission('member.delete');
 
   const queryClient = useQueryClient();
+
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const showSuccess = (msg: string) => { setMessage(msg); setError(''); };
+  const showError = (err: any) => {
+    const raw = err?.message || 'Something went wrong';
+    setError(translateError(raw, fa));
+    setMessage('');
+  };
 
   const [showPassword, setShowPassword] = useState(false);
   const [editingMember, setEditingMember] = useState<any>(null);
@@ -50,7 +61,9 @@ export default function Members() {
       queryClient.invalidateQueries({ queryKey: ['members'] });
       reset();
       setShowForm(false);
-    }
+      showSuccess(fa ? 'عضو با موفقیت اضافه شد.' : 'Member added successfully.');
+    },
+    onError: (err: any) => showError(err),
   });
 
 
@@ -64,15 +77,20 @@ export default function Members() {
       queryClient.invalidateQueries({ queryKey: ['members'] });
       reset();
       setEditingMember(null);
-    }
+      showSuccess(fa ? 'عضو با موفقیت ویرایش شد.' : 'Member updated successfully.');
+    },
+    onError: (err: any) => showError(err),
   });
 
 
   const deleteMutation = useMutation({
     mutationFn: membersApi.delete,
 
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['members'] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      showSuccess(fa ? 'عضو با موفقیت حذف شد.' : 'Member deleted successfully.');
+    },
+    onError: (err: any) => showError(err),
   });
 
 
@@ -132,6 +150,16 @@ export default function Members() {
         </p>
       </div>
 
+      {message && (
+        <div className="rounded-xl bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-400">
+          {message}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+          {error}
+        </div>
+      )}
 
       {(canCreate || canUpdate) && !showForm && !editingMember && (
         <Button onClick={() => setShowForm(true)} className="w-full">
@@ -272,7 +300,11 @@ export default function Members() {
             </button>
           </div>
 
-          {viewMode === 'table' ? (
+          {members?.data?.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              {fa ? 'هنوز عضوی وجود ندارد.' : 'No members yet.'}
+            </p>
+          ) : viewMode === 'table' ? (
             <Table>
               <Thead>
                 <Tr>

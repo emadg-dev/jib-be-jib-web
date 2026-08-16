@@ -19,7 +19,15 @@ export default function Finance() {
   const [tab, setTab] = useState<FinanceTab>('deposits');
 
   return (
-    <div dir={fa ? 'rtl' : 'ltr'} className="space-y-4">
+    <div dir={fa ? 'rtl' : 'ltr'} className="space-y-6">
+      <div>
+        <h1 className="page-title">
+          {fa ? 'مالی' : 'Finance'}
+        </h1>
+        <p className="page-subtitle">
+          {fa ? 'واریزها، خرجی‌ها و تسویه‌ها' : 'Deposits, expenses and settlements'}
+        </p>
+      </div>
       <div className="flex gap-1 rounded-2xl border border-border bg-card/50 p-1">
         {TABS.map(({ key, en, fa: faLabel, icon: Icon }) => (
           <button

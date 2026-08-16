@@ -158,7 +158,7 @@ export default function Dashboard() {
 
   if (error)
     return (
-      <div className="p-8 text-center text-red-500">
+      <div className="rounded-xl bg-rose-50 p-8 text-center text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
         {fa ? 'دریافت اطلاعات داشبورد با مشکل مواجه شد.' : 'Failed to load dashboard data.'}
       </div>
     );
@@ -632,7 +632,7 @@ export default function Dashboard() {
             />
             <div className="flex justify-end gap-2 mt-4">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => { setCustomMessageOpen(false); setCustomMessage(''); }}
               >
                 {fa ? 'لغو' : 'Cancel'}

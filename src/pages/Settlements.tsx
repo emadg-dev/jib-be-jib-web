@@ -1,4 +1,5 @@
 import { useState, type SetStateAction } from 'react';
+import { translateError } from '../utils/translations';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { LayoutGrid, List, Plus } from 'lucide-react';
 import { settlementsApi, membersApi, type SettlementRecord } from '../api/services';
@@ -35,6 +36,16 @@ export default function Settlements() {
     `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const queryClient = useQueryClient();
+
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const showSuccess = (msg: string) => { setMessage(msg); setError(''); };
+  const showError = (err: any) => {
+    const raw = err?.message || 'Something went wrong';
+    setError(translateError(raw, fa));
+    setMessage('');
+  };
 
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
@@ -80,7 +91,9 @@ export default function Settlements() {
     onSuccess: () => {
       refresh();
       clear();
-    }
+      showSuccess(fa ? 'تسویه با موفقیت ثبت شد.' : 'Settlement recorded successfully.');
+    },
+    onError: (err: any) => showError(err),
   });
 
 
@@ -89,13 +102,19 @@ export default function Settlements() {
     onSuccess: () => {
       refresh();
       clear();
-    }
+      showSuccess(fa ? 'تسویه با موفقیت ویرایش شد.' : 'Settlement updated successfully.');
+    },
+    onError: (err: any) => showError(err),
   });
 
 
   const remove = useMutation({
     mutationFn: settlementsApi.delete,
-    onSuccess: refresh
+    onSuccess: () => {
+      refresh();
+      showSuccess(fa ? 'تسویه با موفقیت حذف شد.' : 'Settlement deleted successfully.');
+    },
+    onError: (err: any) => showError(err),
   });
 
 
@@ -141,6 +160,16 @@ export default function Settlements() {
 
       </div>
 
+      {message && (
+        <div className="rounded-xl bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-400">
+          {message}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+          {error}
+        </div>
+      )}
 
       {!showForm && !editing && (
         <Button onClick={() => setShowForm(true)} className="w-full">
@@ -249,7 +278,7 @@ export default function Settlements() {
                 editing &&
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   onClick={clear}
                 >
                   {fa ? 'لغو' : 'Cancel'}
@@ -285,7 +314,11 @@ export default function Settlements() {
             </button>
           </div>
 
-          {viewMode === 'table' ? (
+          {settlements?.data?.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              {fa ? 'هنوز تسویه‌ای ثبت نشده.' : 'No settlements recorded yet.'}
+            </p>
+          ) : viewMode === 'table' ? (
             <Table>
               <Thead>
                 <Tr>

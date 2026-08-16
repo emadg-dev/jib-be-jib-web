@@ -1,4 +1,5 @@
 import { useState, type SetStateAction } from 'react';
+import { translateError } from '../utils/translations';
 import { useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Pencil } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,8 +11,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
   Input,
   Label,
 } from '../components/ui/core';
@@ -37,6 +36,16 @@ export default function TripPicker() {
   const confirm = useConfirm();
 
   const navigate = useNavigate();
+
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const showSuccess = (msg: string) => { setMessage(msg); setError(''); };
+  const showError = (err: any) => {
+    const raw = err?.message || 'Something went wrong';
+    setError(translateError(raw, fa));
+    setMessage('');
+  };
 
   const [name, setName] = useState('');
   const [currency, setCurrency] = useState('USD');
@@ -79,6 +88,9 @@ export default function TripPicker() {
     try {
       await deleteTrip(id);
       resetForm();
+      showSuccess(fa ? 'سفر با موفقیت حذف شد.' : 'Trip deleted successfully.');
+    } catch (err: any) {
+      showError(err);
     } finally {
       setBusy(false);
     }
@@ -90,10 +102,14 @@ export default function TripPicker() {
     try {
       if (editing) {
         await updateTrip(editing.id, { name, currency });
+        showSuccess(fa ? 'سفر با موفقیت ویرایش شد.' : 'Trip updated successfully.');
       } else {
         await createTrip({ name, currency });
+        showSuccess(fa ? 'سفر با موفقیت ایجاد شد.' : 'Trip created successfully.');
       }
       resetForm();
+    } catch (err: any) {
+      showError(err);
     } finally {
       setBusy(false);
     }
@@ -101,16 +117,27 @@ export default function TripPicker() {
 
   return (
     <div dir={fa ? 'rtl' : 'ltr'} className="mx-auto max-w-3xl space-y-6">
-      <CardHeader className="px-0">
-        <CardTitle className="text-2xl">
+      <div>
+        <h1 className="page-title">
           {fa ? 'سفرهای من' : 'Your Trips'}
-        </CardTitle>
+        </h1>
         <p className="page-subtitle">
           {fa
             ? 'یکی از سفرها رو انتخاب کن تا هزینه‌ها، اعضا و حساب‌هاش رو ببینی.'
             : 'Choose a trip to manage its budget, members and expenses.'}
         </p>
-      </CardHeader>
+      </div>
+
+      {message && (
+        <div className="rounded-xl bg-green-50 p-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-400">
+          {message}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+          {error}
+        </div>
+      )}
 
       {/* Create / Edit form */}
       {(creating || editing) && (
@@ -152,12 +179,12 @@ export default function TripPicker() {
                 />
               </div>
               <div className="flex gap-2 sm:col-span-2">
-                <Button type="submit" disabled={busy}>
+                <Button type="submit" loading={busy} disabled={busy}>
                   {editing
                     ? fa ? 'ذخیره تغییرات' : 'Save changes'
                     : fa ? 'ساخت سفر' : 'Create trip'}
                 </Button>
-                <Button type="button" variant="outline" onClick={resetForm}>
+                <Button type="button" variant="secondary" onClick={resetForm}>
                   {fa ? 'لغو' : 'Cancel'}
                 </Button>
               </div>

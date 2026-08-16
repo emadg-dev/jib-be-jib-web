@@ -123,9 +123,9 @@ function EditRatingDialog({ fa, rating, isAdminOrOwner, onClose }: {
         </div>
 
         {updateMutation.isError && (
-          <p className="mt-3 text-sm text-red-500">
+          <div className="mt-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
             {fa ? 'خطا در بروزرسانی امتیاز.' : 'Failed to update rating.'}
-          </p>
+          </div>
         )}
       </div>
     </div>
@@ -138,7 +138,7 @@ function RatingsStatsView({ fa }: { fa: boolean }) {
     queryFn: ratingsApi.getAll,
   });
 
-  if (isLoading) return <PageSkeleton />;
+  if (isLoading) return <div dir={fa ? 'rtl' : 'ltr'}><PageSkeleton /></div>;
 
   const allRatings: AllRating[] = allRatingsRes?.data || [];
 
@@ -450,7 +450,7 @@ function AllRatingsView({ fa, isAdminOrOwner }: { fa: boolean; isAdminOrOwner: b
 
   const [editingRating, setEditingRating] = useState<AllRating | null>(null);
 
-  if (isLoading) return <PageSkeleton />;
+  if (isLoading) return <div dir={fa ? 'rtl' : 'ltr'}><PageSkeleton /></div>;
 
   const allRatings: AllRating[] = allRatingsRes?.data || [];
 
@@ -570,7 +570,7 @@ function RatingsReceivedView({ fa }: { fa: boolean }) {
 
   const toggle = (id: string) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  if (isLoading) return <PageSkeleton />;
+  if (isLoading) return <div dir={fa ? 'rtl' : 'ltr'}><PageSkeleton /></div>;
 
   const allRatings: AllRating[] = allRatingsRes?.data || [];
 
@@ -722,7 +722,7 @@ export default function Ratings() {
     if (tab === 'rate' && allRated && !isAdminOrOwner) setTab('view');
   }, [tab, canSeeStats, allRated, isAdminOrOwner]);
 
-  if (isLoading) return <PageSkeleton />;
+  if (isLoading) return <div dir={fa ? 'rtl' : 'ltr'}><PageSkeleton /></div>;
 
   if (selectedRatee) {
     const canSubmit = scores.ethics !== null && scores.participation !== null && scores.flexibility !== null && !submitMutation.isPending;
@@ -783,9 +783,9 @@ export default function Ratings() {
             </div>
 
             {submitMutation.isError && (
-              <p className="mt-3 text-sm text-red-500">
+              <div className="mt-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
                 {fa ? 'خطا در ثبت ارزیابی.' : 'Failed to submit rating.'}
-              </p>
+              </div>
             )}
           </CardContent>
         </Card>
