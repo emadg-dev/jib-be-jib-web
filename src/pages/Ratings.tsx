@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button, Table, Thead, Tbody, 
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { Star, Check, ArrowLeft, Eye, Users, Trash2, BarChart3, Trophy, TrendingDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { Star, Check, ArrowLeft, Eye, Users, Trash2, BarChart3, Trophy, TrendingDown, ChevronDown, ChevronUp, Medal, ArrowDown, Crown } from 'lucide-react';
 // import { useNavigate } from 'react-router-dom';
 import Avatar from '../components/Avatar';
 import { PageSkeleton } from '../components/Skeleton';
@@ -312,50 +312,50 @@ function RatingsStatsView({ fa }: { fa: boolean }) {
             title={fa ? 'پایین‌ترین امتیاز کل' : 'Lowest Overall'}
             names={lowestOverall.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(lowestOverallVal)} ${lowestOverallVal.toFixed(1)}`}
-            color="bg-gray-100 dark:bg-gray-800"
-            icon={<TrendingDown size={18} className="text-gray-600" />}
+            color="bg-red-50 dark:bg-red-900/20"
+            icon={<ArrowDown size={18} className="text-red-500" />}
           />
           <StatCard
             title={fa ? 'قهرمان اخلاق' : 'Ethics Champion'}
             names={championEthics.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(championEthicsVal)} ${championEthicsVal.toFixed(1)}`}
-            color="bg-indigo-100 dark:bg-indigo-900/30"
-            icon={<Star size={18} className="text-indigo-600" />}
+            color="bg-emerald-100 dark:bg-emerald-900/30"
+            icon={<Crown size={18} className="text-emerald-600" />}
           />
           <StatCard
             title={fa ? 'کمترین اخلاق' : 'Lowest Ethics'}
             names={lowestEthics.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(lowestEthicsVal)} ${lowestEthicsVal.toFixed(1)}`}
-            color="bg-indigo-50 dark:bg-indigo-900/20"
-            icon={<Star size={18} className="text-indigo-400" />}
+            color="bg-rose-50 dark:bg-rose-900/20"
+            icon={<ArrowDown size={18} className="text-rose-500" />}
           />
           <StatCard
             title={fa ? 'قهرمان مشارکت' : 'Participation Champion'}
             names={championParticipation.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(championParticipationVal)} ${championParticipationVal.toFixed(1)}`}
-            color="bg-cyan-100 dark:bg-cyan-900/30"
-            icon={<Star size={18} className="text-cyan-600" />}
+            color="bg-sky-100 dark:bg-sky-900/30"
+            icon={<Medal size={18} className="text-sky-600" />}
           />
           <StatCard
             title={fa ? 'کمترین مشارکت' : 'Lowest Participation'}
             names={lowestParticipation.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(lowestParticipationVal)} ${lowestParticipationVal.toFixed(1)}`}
-            color="bg-cyan-50 dark:bg-cyan-900/20"
-            icon={<Star size={18} className="text-cyan-400" />}
+            color="bg-rose-50 dark:bg-rose-900/20"
+            icon={<ArrowDown size={18} className="text-rose-500" />}
           />
           <StatCard
             title={fa ? 'قهرمان انعطاف' : 'Flexibility Champion'}
             names={championFlexibility.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(championFlexibilityVal)} ${championFlexibilityVal.toFixed(1)}`}
-            color="bg-emerald-100 dark:bg-emerald-900/30"
-            icon={<Star size={18} className="text-emerald-600" />}
+            color="bg-teal-100 dark:bg-teal-900/30"
+            icon={<Star size={18} className="text-teal-600" />}
           />
           <StatCard
             title={fa ? 'کمترین انعطاف' : 'Lowest Flexibility'}
             names={lowestFlexibility.map(s => ({ name: s.name, avatar: s.avatar }))}
             value={`${bar(lowestFlexibilityVal)} ${lowestFlexibilityVal.toFixed(1)}`}
-            color="bg-emerald-50 dark:bg-emerald-900/20"
-            icon={<Star size={18} className="text-emerald-400" />}
+            color="bg-rose-50 dark:bg-rose-900/20"
+            icon={<ArrowDown size={18} className="text-rose-500" />}
           />
         </div>
       </div>
@@ -372,14 +372,14 @@ function RatingsStatsView({ fa }: { fa: boolean }) {
             names={mostGenerous.map(s => ({ name: s.name, avatar: s.avatar }))}
             value=""
             color="bg-green-100 dark:bg-green-900/30"
-            icon={<TrendingDown size={18} className="text-green-600 rotate-180" />}
+            icon={<TrendingDown size={18} className="text-green-600 -rotate-90" />}
           />
           <StatCard
             title={fa ? 'سخت‌گیرترین' : 'Strictest'}
             names={strictest.map(s => ({ name: s.name, avatar: s.avatar }))}
             value=""
             color="bg-red-50 dark:bg-red-900/20"
-            icon={<TrendingDown size={18} className="text-red-500" />}
+            icon={<TrendingDown size={18} className="text-red-500 rotate-90" />}
           />
         </div>
       </div>
@@ -473,7 +473,7 @@ function AllRatingsView({ fa, isAdminOrOwner }: { fa: boolean; isAdminOrOwner: b
   return (
     <div className="space-y-4">
       {Object.entries(groupedByRater).map(([raterId, group]) => {
-        const isOpen = expanded[raterId] !== false;
+        const isOpen = expanded[raterId] === true;
         return (
           <Card key={raterId} className="shadow-sm">
             <button
@@ -485,42 +485,30 @@ function AllRatingsView({ fa, isAdminOrOwner }: { fa: boolean; isAdminOrOwner: b
                 <Avatar src={group.avatar} name={group.name} size={28} />
                 {group.name}
               </CardTitle>
-              <div className="flex items-center gap-2">
-                {isAdminOrOwner && (
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="hidden"
-                  />
-                )}
-                {isOpen ? <ChevronUp size={18} className="text-muted-foreground" /> : <ChevronDown size={18} className="text-muted-foreground" />}
-              </div>
+              {isOpen ? <ChevronUp size={18} className="text-muted-foreground" /> : <ChevronDown size={18} className="text-muted-foreground" />}
             </button>
-            {isAdminOrOwner && (
-              <div className="px-4 pb-2 -mt-2">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  loading={deleteMutation.isPending}
-                  onClick={async (e: { stopPropagation: () => void; }) => {
-                    e.stopPropagation();
-                    if (!await confirm(
-                      fa ? 'حذف ارزیابی‌ها' : 'Delete ratings',
-                      fa ? `آیا از حذف تمام ارزیابی‌های ${group.name} مطمئنی؟` : `Delete all ratings given by ${group.name}?`
-                    )) return;
-                    deleteMutation.mutate(raterId);
-                  }}
-                >
-                  <Trash2 size={14} className="me-1" />
-                  {fa ? 'حذف همه' : 'Delete all'}
-                </Button>
-              </div>
-            )}
             {isOpen && (
               <CardContent>
+                {isAdminOrOwner && (
+                  <div className="mb-3">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      loading={deleteMutation.isPending}
+                      onClick={async (e: { stopPropagation: () => void }) => {
+                        e.stopPropagation();
+                        if (!await confirm(
+                          fa ? 'حذف ارزیابی‌ها' : 'Delete ratings',
+                          fa ? `آیا از حذف تمام ارزیابی‌های ${group.name} مطمئنی؟` : `Delete all ratings given by ${group.name}?`
+                        )) return;
+                        deleteMutation.mutate(raterId);
+                      }}
+                    >
+                      <Trash2 size={14} className="me-1" />
+                      {fa ? 'حذف همه' : 'Delete all'}
+                    </Button>
+                  </div>
+                )}
                 <Table>
                   <Thead>
                     <Tr>
@@ -614,7 +602,7 @@ function RatingsReceivedView({ fa }: { fa: boolean }) {
         const avgParticipation = sumParticipation / group.ratings.length;
         const avgFlexibility = sumFlexibility / group.ratings.length;
         const avgOverall = (avgEthics + avgParticipation + avgFlexibility) / 3;
-        const isOpen = expanded[rateeId] !== false;
+        const isOpen = expanded[rateeId] === true;
 
         return (
           <Card key={rateeId} className="shadow-sm">
