@@ -115,3 +115,44 @@ export const settlementsApi = {
   update: (id: string, data: { member_id: string; amount: number; note?: string; date?: string }) => apiClient.put(`/settlements/${id}`, data),
   delete: (id: string) => apiClient.delete(`/settlements/${id}`),
 };
+
+export interface PermissionDefinition {
+  key: string;
+  label: { en: string; fa: string };
+  group: string;
+  description: { en: string; fa: string };
+}
+
+export interface PermissionOverride {
+  permission: string;
+  effect: 'allow' | 'deny';
+}
+
+export const permissionsApi = {
+  getRegistry: () => apiClient.get<{ permissions: PermissionDefinition[]; groups: string[] }>('/permissions/registry'),
+  getAll: () => apiClient.get<Record<string, Record<string, { permission: string; effect: string }[]>>>('/permissions'),
+  getMember: (memberId: string) => apiClient.get<{ effective: string[]; overrides: PermissionOverride[]; customRoleId: string | null }>(`/permissions/${memberId}`),
+  setMember: (memberId: string, grants: { permission: string; effect: 'allow' | 'deny' }[]) => apiClient.put(`/permissions/${memberId}`, { grants }),
+  grant: (memberId: string, permission: string, effect: 'allow' | 'deny' = 'allow') => apiClient.post(`/permissions/${memberId}/${permission}`, { effect }),
+  revoke: (memberId: string, permission: string) => apiClient.delete(`/permissions/${memberId}/${permission}`),
+  assignRole: (memberId: string, customRoleId: string | null) => apiClient.put(`/permissions/${memberId}/role`, { customRoleId }),
+};
+
+export interface TripRole {
+  id: string;
+  trip_id: string;
+  name: string;
+  description: string | null;
+  is_default: number;
+  created_at: string;
+  permissions?: string[];
+}
+
+export const rolesApi = {
+  getAll: () => apiClient.get<TripRole[]>('/roles'),
+  getPermissions: () => apiClient.get<Record<string, string[]>>('/roles/permissions'),
+  get: (roleId: string) => apiClient.get<TripRole>(`/roles/${roleId}`),
+  create: (data: { name: string; description?: string; permissions?: string[] }) => apiClient.post<TripRole>('/roles', data),
+  update: (roleId: string, data: { name?: string; description?: string; permissions?: string[] }) => apiClient.put<TripRole>(`/roles/${roleId}`, data),
+  delete: (roleId: string) => apiClient.delete(`/roles/${roleId}`),
+};

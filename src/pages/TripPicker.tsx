@@ -4,6 +4,7 @@ import { Trash2, Plus, Pencil } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useConfirm } from '../components/ConfirmDialog';
+import { usePermissions } from '../hooks/usePermissions';
 import type { Trip } from '../api/services';
 import {
   Button,
@@ -27,6 +28,9 @@ export default function TripPicker() {
     isOwner,
     isAdmin,
   } = useAuth();
+  const { hasPermission } = usePermissions();
+
+  const canCreateTrip = isOwner || hasPermission('trip.create');
 
   const { language } = usePreferences();
   const fa = language === 'fa';
@@ -173,7 +177,7 @@ export default function TripPicker() {
               ? 'اولین سفر خود را ایجاد کنید.'
               : 'Create your first trip to start tracking expenses.'}
           </p>
-          {isOwner && (
+          {canCreateTrip && (
             <Button className="mt-4" onClick={() => { resetForm(); setCreating(true); }}>
               <Plus size={16} className="me-1.5" />
               {fa ? 'ساخت سفر' : 'Create trip'}
@@ -231,7 +235,7 @@ export default function TripPicker() {
           ))}
 
           {/* Add new trip card */}
-          {isOwner && !creating && (
+          {canCreateTrip && !creating && (
             <button
               onClick={() => { resetForm(); setCreating(true); }}
               className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card/30 p-5 text-muted-foreground transition hover:border-indigo-300 hover:bg-indigo-500/5 hover:text-indigo-600"

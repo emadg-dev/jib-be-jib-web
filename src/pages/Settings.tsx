@@ -1,13 +1,15 @@
 import { useEffect, useState, type SetStateAction } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Settings as SettingsIcon, Send, Save, Bell, SlidersHorizontal } from 'lucide-react';
+import { Settings as SettingsIcon, Send, Save, Bell, SlidersHorizontal, Shield, ShieldPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { notificationsApi, type TelegramEventKey, type TelegramSettings } from '../api/services';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Textarea, Label, Checkbox } from '../components/ui/core';
 import { CardSkeleton } from '../components/Skeleton';
 import { translateError } from '../utils/translations';
+import PermissionsTab from './Permissions';
+import RolesTab from './Roles';
 
 const TELEGRAM_EVENTS: { key: TelegramEventKey; en: string; fa: string }[] = [
   { key: 'trip_created', en: 'Trip created', fa: 'سفر ایجاد شد' },
@@ -57,7 +59,7 @@ export default function SettingsPage() {
   const { selectedTrip, isOwner } = useAuth();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<'general' | 'notifications'>('general');
+  const [tab, setTab] = useState<'general' | 'notifications' | 'permissions' | 'roles'>('general');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -74,6 +76,13 @@ export default function SettingsPage() {
     const raw = err?.message || 'Something went wrong';
     setError(translateError(raw, fa));
     setMessage('');
+  };
+
+  const tabTitles: Record<string, { en: string; fa: string }> = {
+    general: { en: 'General', fa: 'عمومی' },
+    notifications: { en: 'Notifications', fa: 'اعلان‌ها' },
+    permissions: { en: 'Permissions', fa: 'دسترسی‌ها' },
+    roles: { en: 'Roles', fa: 'نقش‌ها' },
   };
 
   return (
@@ -101,6 +110,18 @@ export default function SettingsPage() {
           icon={<Bell size={16} />}
           label={fa ? 'اعلان‌ها' : 'Notifications'}
         />
+        <TabButton
+          active={tab === 'permissions'}
+          onClick={() => { setTab('permissions'); clearFeedback(); }}
+          icon={<Shield size={16} />}
+          label={fa ? 'دسترسی‌ها' : 'Permissions'}
+        />
+        <TabButton
+          active={tab === 'roles'}
+          onClick={() => { setTab('roles'); clearFeedback(); }}
+          icon={<ShieldPlus size={16} />}
+          label={fa ? 'نقش‌ها' : 'Roles'}
+        />
       </div>
 
       {message && (
@@ -114,11 +135,15 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {tab === 'general' ? (
-        <GeneralTab onSuccess={showSuccess} onError={showError} />
-      ) : (
-        <NotificationsTab onSuccess={showSuccess} onError={showError} />
-      )}
+      <div>
+        <p className="text-sm font-medium text-muted-foreground mb-4">
+          {fa ? tabTitles[tab]?.fa : tabTitles[tab]?.en}
+        </p>
+        {tab === 'general' && <GeneralTab onSuccess={showSuccess} onError={showError} />}
+        {tab === 'notifications' && <NotificationsTab onSuccess={showSuccess} onError={showError} />}
+        {tab === 'permissions' && <PermissionsTab />}
+        {tab === 'roles' && <RolesTab />}
+      </div>
     </div>
   );
 }
@@ -128,14 +153,14 @@ function TabButton({ active, onClick, icon, label }: any) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+      className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
         active
           ? 'bg-primary text-primary-foreground shadow'
           : 'text-muted-foreground hover:bg-accent hover:text-foreground'
       }`}
     >
       {icon}
-      {label}
+      <span className="hidden sm:inline">{label}</span>
     </button>
   );
 }

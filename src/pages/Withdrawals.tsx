@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useConfirm } from '../components/ConfirmDialog';
+import { usePermissions } from '../hooks/usePermissions';
 import { formatAmount, parseMoney } from '../utils/format';
 import { gregorianToJalali } from '../utils/jalaali';
 import JalaliDatePicker from '../components/JalaliDatePicker';
@@ -39,9 +40,14 @@ type Shares = Record<string, string>;
 
 export default function Withdrawals() {
   const { isOwner, user } = useAuth();
+  const { hasPermission } = usePermissions();
   const { language } = usePreferences();
   const fa = language === 'fa';
   const confirm = useConfirm();
+
+  const canCreate = isOwner || hasPermission('withdrawal.create');
+  const canUpdate = isOwner || hasPermission('withdrawal.update');
+  const canDelete = isOwner || hasPermission('withdrawal.delete');
 
   const fmt = (v: number) =>
     `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -302,14 +308,14 @@ export default function Withdrawals() {
         </p>
       </div>
 
-      {isOwner && !showForm && !editing && (
+      {canCreate && !showForm && !editing && (
         <Button onClick={() => setShowForm(true)} className="w-full">
           <Plus size={18} className="me-1" />
           {fa ? 'ثبت خرج جدید' : 'Record new expense'}
         </Button>
       )}
 
-      {isOwner && (showForm || editing) && (
+      {(canCreate || canUpdate) && (showForm || editing) && (
         <Card>
           <CardHeader>
             <CardTitle>
@@ -580,7 +586,7 @@ export default function Withdrawals() {
                   <Th>{fa ? 'بین چه کسانی تقسیم شده' : 'Split among'}</Th>
                   <Th>{fa ? 'مبلغ' : 'Amount'}</Th>
                   <Th>{fa ? 'پرداخت توسط' : 'Paid by'}</Th>
-                  {isOwner && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
+                  {(canUpdate || canDelete) && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
                 </Tr>
               </Thead>
               <Tbody>
@@ -594,7 +600,7 @@ export default function Withdrawals() {
                       <Td>{w.beneficiaries.map((b) => b.member_display_name || b.member_name).join(', ')}</Td>
                       <Td className="font-medium text-red-600">{fmt(w.amount)}</Td>
                       <Td className="text-xs text-muted-foreground">{w.paid_by_name || (fa ? 'بانک' : 'Bank')}</Td>
-                    {isOwner && (
+                    {(canUpdate || canDelete) && (
                       <Td>
                         <div className="flex gap-2">
                            <Button variant="outline" onClick={() => { edit(w); setShowForm(true); }}>{fa ? 'ویرایش' : 'Edit'}</Button>
@@ -651,7 +657,7 @@ export default function Withdrawals() {
                         ))}
                       </div>
                     )}
-                    {isOwner && (
+                    {(canUpdate || canDelete) && (
                       <div className="mt-3 flex gap-2 border-t border-border pt-3">
                          <Button variant="outline" size="sm" onClick={() => { edit(w); setShowForm(true); }}>{fa ? 'ویرایش' : 'Edit'}</Button>
                         <Button

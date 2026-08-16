@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, Table, Thead, Tbody, Tr, Th, 
 import { useForm } from 'react-hook-form';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useState } from 'react';
 import { Eye, EyeOff, Pencil, LayoutGrid, List, Plus } from 'lucide-react';
@@ -15,6 +16,10 @@ export default function Members() {
   const fa = language === 'fa';
   const confirm = useConfirm();
   const { isOwner, user } = useAuth();
+  const { hasPermission } = usePermissions();
+  const canCreate = isOwner || hasPermission('member.create');
+  const canUpdate = isOwner || hasPermission('member.update');
+  const canDelete = isOwner || hasPermission('member.delete');
 
   const queryClient = useQueryClient();
 
@@ -128,14 +133,14 @@ export default function Members() {
       </div>
 
 
-      {isOwner && !showForm && !editingMember && (
+      {(canCreate || canUpdate) && !showForm && !editingMember && (
         <Button onClick={() => setShowForm(true)} className="w-full">
           <Plus size={18} className="me-1" />
           {fa ? 'افزودن عضو جدید' : 'Add new member'}
         </Button>
       )}
 
-      {isOwner && (showForm || editingMember) && <Card>
+      {(canCreate || canUpdate) && (showForm || editingMember) && <Card>
 
         <CardHeader>
           <CardTitle>
@@ -275,7 +280,7 @@ export default function Members() {
                   <Th>{fa ? 'نام کاربری' : 'Username'}</Th>
                   <Th>{fa ? 'نقش' : 'Role'}</Th>
                   <Th>{fa ? 'تاریخ عضویت' : 'Joined'}</Th>
-                  {isOwner && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
+                   {(canUpdate || canDelete) && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
                 </Tr>
               </Thead>
               <Tbody>
@@ -294,13 +299,13 @@ export default function Members() {
                         {m.role}{m.active === false && <span className="ms-2 text-xs text-amber-600">{fa ? 'غیرفعال' : 'Inactive'}</span>}
                       </Td>
                       <Td>{new Date(m.created_at).toLocaleDateString()}</Td>
-                    {isOwner && (
+                     {(canUpdate || canDelete) && (
                       <Td>
                         <div className="flex gap-2">
                            <Button variant="secondary" onClick={() => { editMember(m); setShowForm(true); }}>
                             <Pencil size={16} />{fa ? 'ویرایش' : 'Edit'}
                           </Button>
-                           {isOwner && (m.role !== 'owner' || user?.role === 'admin') && (
+                           {canDelete && (m.role !== 'owner' || user?.role === 'admin') && (
                             <Button
                               variant="destructive"
                               loading={deletingId === m.id}
@@ -349,7 +354,7 @@ export default function Members() {
                     <p className="mt-2 text-xs text-muted-foreground">
                       {fa ? 'عضویت:' : 'Joined:'} {new Date(m.created_at).toLocaleDateString()}
                     </p>
-                    {isOwner && (
+                     {(canUpdate || canDelete) && (
                       <div className="mt-3 flex gap-2 border-t border-border pt-3">
                          <Button variant="outline" size="sm" onClick={() => { editMember(m); setShowForm(true); }}>
                           <Pencil size={14} className="me-1" />{fa ? 'ویرایش' : 'Edit'}

@@ -10,7 +10,7 @@ type FinanceTab = 'deposits' | 'expenses' | 'settlements';
 const TABS: { key: FinanceTab; en: string; fa: string; icon: typeof ArrowDownToLine }[] = [
   { key: 'deposits', en: 'Deposits', fa: 'واریزها', icon: ArrowDownToLine },
   { key: 'expenses', en: 'Expenses', fa: 'هزینه‌ها', icon: ArrowUpFromLine },
-  { key: 'settlements', en: 'Settlements', fa: 'تسویه حساب', icon: Banknote },
+  { key: 'settlements', en: 'Settlements', fa: 'تسویه', icon: Banknote },
 ];
 
 export default function Finance() {

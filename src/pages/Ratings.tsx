@@ -808,58 +808,66 @@ export default function Ratings() {
         {(isAdminOrOwner || !allRated) && (
           <button
             onClick={() => setTab('rate')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
               tab === 'rate'
                 ? 'bg-primary text-primary-foreground shadow'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             }`}
           >
             <Star size={16} />
-            {fa ? 'ارزیابی' : 'Rate'}
+            <span className="hidden sm:inline">{fa ? 'ارزیابی' : 'Rate'}</span>
           </button>
         )}
         {allRated && (
           <button
             onClick={() => setTab('view')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
               tab === 'view'
                 ? 'bg-primary text-primary-foreground shadow'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             }`}
           >
             <Eye size={16} />
-            {fa ? 'ارزیابی‌ها' : 'Given'}
+            <span className="hidden sm:inline">{fa ? 'ارزیابی‌ها' : 'Given'}</span>
           </button>
         )}
         {isAdminOrOwner && (
           <button
             onClick={() => setTab('received')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
               tab === 'received'
                 ? 'bg-primary text-primary-foreground shadow'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             }`}
           >
             <Users size={16} />
-            {fa ? 'دریافتی' : 'Received'}
+            <span className="hidden sm:inline">{fa ? 'دریافتی' : 'Received'}</span>
           </button>
         )}
         {canSeeStats && (
           <button
             onClick={() => setTab('stats')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
               tab === 'stats'
                 ? 'bg-primary text-primary-foreground shadow'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground'
             }`}
           >
             <BarChart3 size={16} />
-            {fa ? 'آمار' : 'Stats'}
+            <span className="hidden sm:inline">{fa ? 'آمار' : 'Stats'}</span>
           </button>
         )}
       </div>
 
-      {tab === 'rate' ? (
+      <div>
+        <p className="text-sm font-medium text-muted-foreground mb-4">
+          {tab === 'rate' && (fa ? 'ارزیابی اعضا' : 'Rate Members')}
+          {tab === 'view' && (fa ? 'ارزیابی‌های ثبت‌شده' : 'Given Ratings')}
+          {tab === 'received' && (fa ? 'ارزیابی‌های دریافتی' : 'Received Ratings')}
+          {tab === 'stats' && (fa ? 'آمار ارزیابی' : 'Rating Statistics')}
+        </p>
+
+        {tab === 'rate' ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {ratees.map((r) => (
             <button
@@ -904,6 +912,7 @@ export default function Ratings() {
       ) : (
         <RatingsStatsView fa={fa} />
       )}
+      </div>
     </div>
   );
 }

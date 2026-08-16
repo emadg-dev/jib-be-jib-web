@@ -5,6 +5,7 @@ import { depositsApi, membersApi, type Deposit } from '../api/services';
 import { gregorianToJalali } from '../utils/jalaali';
 import JalaliDatePicker from '../components/JalaliDatePicker';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useConfirm } from '../components/ConfirmDialog';
 import { formatAmount, parseMoney } from '../utils/format';
@@ -31,12 +32,15 @@ export default function Deposits() {
   const { language } = usePreferences();
   const fa = language === 'fa';
   const confirm = useConfirm();
-  const { user } = useAuth();
+  const { user, isOwner } = useAuth();
+  const { hasPermission } = usePermissions();
+  const canCreate = isOwner || hasPermission('deposit.create');
+  const canUpdate = isOwner || hasPermission('deposit.update');
+  const canDelete = isOwner || hasPermission('deposit.delete');
 
   const fmt = (v: number) =>
     `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  const { isOwner } = useAuth();
   const queryClient = useQueryClient();
 
   const [amount, setAmount] = useState('');
@@ -145,14 +149,14 @@ export default function Deposits() {
       </div>
 
 
-      {isOwner && !showForm && !editing && (
+      {canCreate && !showForm && !editing && (
         <Button onClick={() => setShowForm(true)} className="w-full">
           <Plus size={18} className="me-1" />
           {fa ? 'افزودن واریزی جدید' : 'Add new deposit'}
         </Button>
       )}
 
-      {isOwner && (showForm || editing) &&
+      {(canCreate || canUpdate) && (showForm || editing) &&
 
       <Card>
 
@@ -296,7 +300,7 @@ export default function Deposits() {
                   <Th>{fa ? 'عضو' : 'Member'}</Th>
                   <Th>{fa ? 'توضیحات' : 'Note'}</Th>
                   <Th>{fa ? 'مبلغ' : 'Amount'}</Th>
-                  {isOwner && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
+                   {(canUpdate || canDelete) && <Th>{fa ? 'عملیات' : 'Action'}</Th>}
                 </Tr>
               </Thead>
               <Tbody>
@@ -308,7 +312,7 @@ export default function Deposits() {
                       <Td>{d.member_display_name || d.member_name}</Td>
                       <Td>{d.note || '-'}</Td>
                       <Td className="font-medium text-green-600">{fmt(d.amount)}</Td>
-                    {isOwner && (
+                     {(canUpdate || canDelete) && (
                       <Td>
                         <div className="flex gap-2">
                            <Button variant="outline" onClick={() => {
@@ -350,7 +354,7 @@ export default function Deposits() {
                       </div>
                       <span className="shrink-0 text-sm font-bold text-green-600">{fmt(d.amount)}</span>
                     </div>
-                    {isOwner && (
+                     {(canUpdate || canDelete) && (
                       <div className="mt-3 flex gap-2 border-t border-border pt-3">
                         <Button variant="outline" size="sm" onClick={() => {
                           setEditing(d); setMemberId(d.member_id); setAmount(formatAmount(String(d.amount)));

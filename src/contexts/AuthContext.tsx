@@ -1,9 +1,21 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { SessionResponse, Trip, User } from '../api/services';
 import { authApi, tripsApi } from '../api/services';
 
+const MEMBER_DEFAULT_PERMISSIONS = [
+  'dashboard.view',
+  'member.view',
+  'deposit.view',
+  'withdrawal.create',
+  'withdrawal.view',
+  'settlement.view',
+  'ratings.view',
+  'ratings.submit',
+];
+
 type AuthContextType = {
   user: User | null; trips: Trip[]; selectedTrip: Trip | null; requiresTripSelection: boolean; loading: boolean;
+  permissions: string[];
   login: (session: SessionResponse) => void;
   selectTrip: (id: string) => Promise<void>;
   createTrip: (data: { name: string; currency: string }) => Promise<string>;
@@ -11,6 +23,7 @@ type AuthContextType = {
   deleteTrip: (id: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (partial: Partial<User>) => void;
+  refreshPermissions: () => Promise<void>;
   isAdmin: boolean; isOwner: boolean; isMember: boolean;
 };
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -22,6 +35,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [requiresTripSelection, setRequiresTripSelection] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [permissions, setPermissions] = useState<string[]>([]);
+
+  const refreshPermissions = useCallback(async () => {
+    if (!user) { setPermissions([]); return; }
+    if (user.role === 'admin' || selectedTrip?.role === 'owner') {
+      setPermissions([]);
+      return;
+    }
+    setPermissions(MEMBER_DEFAULT_PERMISSIONS);
+  }, [user, selectedTrip]);
+
+  useEffect(() => {
+    refreshPermissions();
+  }, [refreshPermissions]);
+
   const applySession = (session: SessionResponse) => {
     setUser(session.user); const available = session.trips || []; setTrips(available);
     const activeTrips = available.filter(trip => trip.active !== false);
@@ -99,12 +127,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await tripsApi.delete(id);
     setTrips(current => current.filter(trip => trip.id !== id));
   };
-  const logout = async () => { try { await authApi.logout(); } finally { localStorage.removeItem('token'); setUser(null); setTrips([]); setSelectedTrip(null); setRequiresTripSelection(false); } };
+  const logout = async () => { try { await authApi.logout(); } finally { localStorage.removeItem('token'); setUser(null); setTrips([]); setSelectedTrip(null); setRequiresTripSelection(false); setPermissions([]); } };
   const updateUser = (partial: Partial<User>) => setUser(u => u ? { ...u, ...partial } : u);
   const isAdmin = user?.role === 'admin';
   return <AuthContext.Provider value={{
     user, trips, selectedTrip, requiresTripSelection, loading, login,
     selectTrip, createTrip, updateTrip, deleteTrip, logout, updateUser,
+    permissions, refreshPermissions,
     isAdmin,
     isOwner: isAdmin || selectedTrip?.role === 'owner',
     isMember: isAdmin || selectedTrip?.role === 'member'
